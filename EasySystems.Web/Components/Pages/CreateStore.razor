@@ -7,294 +7,168 @@
 
 <div class="store-page">
 
-    <section class="store-hero">
+    <section class="store-hero-pro">
         <p class="eyebrow">EasySystems</p>
-        <h1>Create your online store</h1>
+        <h1>Build your dream online store</h1>
         <p>
-            Choose a package, answer a few questions, and we will prepare your online store request.
+            Tell us exactly what you need and we’ll create the right solution for your business.
         </p>
     </section>
 
-    <section class="packages">
-        <div class="package-card @(model.PackageName == "Starter" ? "selected" : "")" @onclick='() => SelectPackage("Starter")'>
-            <h2>Starter</h2>
-            <p class="price">4,900 kr</p>
-            <p class="package-desc">For small businesses starting online.</p>
-            <ul>
-                <li>Up to 20 products</li>
-                <li>Simple store design</li>
-                <li>Contact page</li>
-                <li>Mobile friendly</li>
-                <li>Basic setup</li>
-            </ul>
-            <button type="button">Select Starter</button>
+    <section class="pro-form-card">
+
+        <h2>Business Information</h2>
+
+        <div class="pro-grid">
+            <input @bind="storeName" placeholder="Store name" />
+            <input @bind="businessType" placeholder="What do you sell?" />
+
+            <select @bind="productCount">
+                <option>1-20 products</option>
+                <option>20-100 products</option>
+                <option>100+ products</option>
+            </select>
+
+            <select @bind="languages">
+                <option>Swedish</option>
+                <option>Arabic</option>
+                <option>English</option>
+                <option>Arabic + Swedish</option>
+                <option>Arabic + Swedish + English</option>
+            </select>
         </div>
 
-        <div class="package-card featured @(model.PackageName == "Business" ? "selected" : "")" @onclick='() => SelectPackage("Business")'>
-            <span class="badge">Most popular</span>
-            <h2>Business</h2>
-            <p class="price">9,900 kr</p>
-            <p class="package-desc">Best choice for serious stores.</p>
-            <ul>
-                <li>Up to 100 products</li>
-                <li>Modern custom design</li>
-                <li>Online payment</li>
-                <li>Discount codes</li>
-                <li>Swedish + Arabic option</li>
-                <li>Basic SEO</li>
-            </ul>
-            <button type="button">Select Business</button>
+        <h2>Design & Branding</h2>
+
+        <div class="pro-grid">
+            <select @bind="hasLogo">
+                <option>I have logo</option>
+                <option>I need logo</option>
+            </select>
+
+            <input @bind="brandColors" placeholder="Preferred colors" />
+
+            <input @bind="exampleSites" placeholder="Sites you like" />
+
+            <select @bind="designStyle">
+                <option>Luxury</option>
+                <option>Modern</option>
+                <option>Simple</option>
+                <option>Bold</option>
+            </select>
         </div>
 
-        <div class="package-card @(model.PackageName == "Premium" ? "selected" : "")" @onclick='() => SelectPackage("Premium")'>
-            <h2>Premium</h2>
-            <p class="price">19,900 kr</p>
-            <p class="package-desc">For businesses that want a complete solution.</p>
-            <ul>
-                <li>Unlimited / large product catalog</li>
-                <li>Custom professional design</li>
-                <li>Online payment</li>
-                <li>Multi-language store</li>
-                <li>Sales reports</li>
-                <li>Google Analytics setup</li>
-                <li>Priority support</li>
-            </ul>
-            <button type="button">Select Premium</button>
-        </div>
-    </section>
+        <h2>Store Features</h2>
 
-    <section class="comparison">
-        <h2>Compare packages</h2>
+        <div class="pro-grid">
+            <select @bind="payment">
+                <option>Yes online payment</option>
+                <option>No</option>
+            </select>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Feature</th>
-                    <th>Starter</th>
-                    <th>Business</th>
-                    <th>Premium</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Online store</td>
-                    <td>✓</td>
-                    <td>✓</td>
-                    <td>✓</td>
-                </tr>
-                <tr>
-                    <td>Products</td>
-                    <td>20</td>
-                    <td>100</td>
-                    <td>More / custom</td>
-                </tr>
-                <tr>
-                    <td>Custom design</td>
-                    <td>Basic</td>
-                    <td>✓</td>
-                    <td>Advanced</td>
-                </tr>
-                <tr>
-                    <td>Online payment</td>
-                    <td>×</td>
-                    <td>✓</td>
-                    <td>✓</td>
-                </tr>
-                <tr>
-                    <td>Discount codes</td>
-                    <td>×</td>
-                    <td>✓</td>
-                    <td>✓</td>
-                </tr>
-                <tr>
-                    <td>Multi-language</td>
-                    <td>×</td>
-                    <td>Optional</td>
-                    <td>✓</td>
-                </tr>
-                <tr>
-                    <td>Reports</td>
-                    <td>×</td>
-                    <td>Basic</td>
-                    <td>Advanced</td>
-                </tr>
-                <tr>
-                    <td>Support</td>
-                    <td>Basic</td>
-                    <td>Standard</td>
-                    <td>Priority</td>
-                </tr>
-            </tbody>
-        </table>
-    </section>
+            <select @bind="shipping">
+                <option>Need shipping</option>
+                <option>No shipping</option>
+            </select>
 
-    <section class="store-form">
-        <h2>Tell us about your store</h2>
-        <p class="form-intro">
-            Answer these questions so we understand what kind of store you want.
-        </p>
+            <select @bind="accounts">
+                <option>Need customer accounts</option>
+                <option>No accounts needed</option>
+            </select>
 
-        <div class="form-grid">
-            <label>
-                Store name
-                <input @bind="model.StoreName" placeholder="Example: Nordic Fashion Store" />
-            </label>
-
-            <label>
-                What do you sell?
-                <input @bind="model.BusinessType" placeholder="Clothes, perfumes, food, electronics..." />
-            </label>
-
-            <label>
-                How many products do you have?
-                <select @bind="productCount">
-                    <option value="1-20">1–20 products</option>
-                    <option value="20-100">20–100 products</option>
-                    <option value="100+">More than 100 products</option>
-                    <option value="Not sure">Not sure yet</option>
-                </select>
-            </label>
-
-            <label>
-                Do you need online payment?
-                <select @bind="onlinePayment">
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                    <option value="Not sure">Not sure</option>
-                </select>
-            </label>
-
-            <label>
-                Do you already have a logo?
-                <select @bind="hasLogo">
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                    <option value="Need help">I need help with logo/design</option>
-                </select>
-            </label>
-
-            <label>
-                Languages needed
-                <select @bind="languages">
-                    <option value="Swedish">Swedish</option>
-                    <option value="Arabic">Arabic</option>
-                    <option value="Swedish + Arabic">Swedish + Arabic</option>
-                    <option value="Swedish + English">Swedish + English</option>
-                    <option value="Arabic + Swedish + English">Arabic + Swedish + English</option>
-                </select>
-            </label>
-
-            <label>
-                Do you need delivery/shipping setup?
-                <select @bind="shipping">
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                    <option value="Not sure">Not sure</option>
-                </select>
-            </label>
-
-            <label>
-                Do you need discount codes?
-                <select @bind="discountCodes">
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                    <option value="Maybe later">Maybe later</option>
-                </select>
-            </label>
+            <select @bind="discounts">
+                <option>Need discount codes</option>
+                <option>No discounts</option>
+            </select>
         </div>
 
-        <label class="full-width">
-            Extra notes
-            <textarea @bind="model.Notes" placeholder="Tell us more about your idea, style, colors, competitors, or special needs..."></textarea>
-        </label>
+        <h2>Business Plan</h2>
 
-        <div class="summary-box">
-            <h3>Selected package: @model.PackageName</h3>
-            <p>We will review your answers and contact you with the next step.</p>
+        <div class="pro-grid">
+            <input @bind="budget" placeholder="Budget (SEK)" />
+            <input @bind="launchDate" placeholder="Preferred launch date" />
+
+            <select @bind="packageName">
+                <option>Starter</option>
+                <option>Business</option>
+                <option>Premium</option>
+            </select>
+
+            <input @bind="domain" placeholder="Do you have domain?" />
         </div>
 
-        <button class="submit-btn" @onclick="SubmitRequest">Submit store request</button>
+        <h2>Extra Notes</h2>
 
-        @if (!string.IsNullOrWhiteSpace(message))
-        {
-            <p class="message">@message</p>
-        }
+        <textarea @bind="notes" placeholder="Write anything important here..."></textarea>
+
+        <button class="submit-btn-pro" @onclick="SubmitRequest">
+            Submit Store Request
+        </button>
+
+        <p class="success-msg">@message</p>
+
     </section>
 </div>
 
 @code {
-    private string message = "";
+    string storeName = "";
+    string businessType = "";
+    string productCount = "1-20 products";
+    string languages = "Swedish";
+    string hasLogo = "I have logo";
+    string brandColors = "";
+    string exampleSites = "";
+    string designStyle = "Modern";
+    string payment = "Yes online payment";
+    string shipping = "Need shipping";
+    string accounts = "Need customer accounts";
+    string discounts = "Need discount codes";
+    string budget = "";
+    string launchDate = "";
+    string packageName = "Business";
+    string domain = "";
+    string notes = "";
+    string message = "";
 
-    private string productCount = "1-20";
-    private string onlinePayment = "Yes";
-    private string hasLogo = "Yes";
-    private string languages = "Swedish";
-    private string shipping = "Yes";
-    private string discountCodes = "Yes";
-
-    private CreateStoreModel model = new()
-        {
-            PackageName = "Business"
-        };
-
-    private void SelectPackage(string packageName)
-    {
-        model.PackageName = packageName;
-    }
-
-    private async Task SubmitRequest()
+    async Task SubmitRequest()
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
 
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            message = "You must verify your email first.";
-            return;
-        }
-
-        var request = new
-        {
-            storeName = model.StoreName,
-            businessType = model.BusinessType,
-            packageName = model.PackageName,
-            notes = model.Notes,
-            answers = new[]
-            {
-                new { question = "How many products do you have?", answer = productCount },
-                new { question = "Do you need online payment?", answer = onlinePayment },
-                new { question = "Do you already have a logo?", answer = hasLogo },
-                new { question = "Languages needed", answer = languages },
-                new { question = "Do you need delivery/shipping setup?", answer = shipping },
-                new { question = "Do you need discount codes?", answer = discountCodes }
-            }
-        };
-
-        using var httpRequest = new HttpRequestMessage(
+        using var req = new HttpRequestMessage(
             HttpMethod.Post,
             "https://localhost:7066/api/StoreRequests");
 
-        httpRequest.Headers.Authorization =
+        req.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        httpRequest.Content = JsonContent.Create(request);
-
-        var response = await Http.SendAsync(httpRequest);
-
-        if (response.IsSuccessStatusCode)
+        req.Content = JsonContent.Create(new
         {
-            message = "Request submitted successfully.";
-        }
-        else
-        {
-            message = $"Failed to submit request. Status: {(int)response.StatusCode}";
-        }
-    }
+            storeName,
+            businessType,
+            packageName,
+            notes,
+            answers = new[]
+            {
+                new { question = "Product Count", answer = productCount },
+                new { question = "Languages", answer = languages },
+                new { question = "Logo", answer = hasLogo },
+                new { question = "Colors", answer = brandColors },
+                new { question = "Example Sites", answer = exampleSites },
+                new { question = "Design Style", answer = designStyle },
+                new { question = "Payment", answer = payment },
+                new { question = "Shipping", answer = shipping },
+                new { question = "Accounts", answer = accounts },
+                new { question = "Discounts", answer = discounts },
+                new { question = "Budget", answer = budget },
+                new { question = "Launch Date", answer = launchDate },
+                new { question = "Domain", answer = domain }
+            }
+        });
 
-    public class CreateStoreModel
-    {
-        public string StoreName { get; set; } = "";
-        public string BusinessType { get; set; } = "";
-        public string PackageName { get; set; } = "";
-        public string Notes { get; set; } = "";
+        var response = await Http.SendAsync(req);
+
+        message = response.IsSuccessStatusCode
+            ? "Request submitted successfully."
+            : "Failed to submit request.";
     }
 }

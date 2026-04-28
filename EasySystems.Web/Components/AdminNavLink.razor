@@ -1,0 +1,23 @@
+﻿@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+@if (showAdmin)
+{
+    <a href="/admin/requests">Admin</a>
+}
+
+@code {
+    private bool showAdmin;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+
+            showAdmin = role == "Admin" || role == "SuperAdmin";
+
+            StateHasChanged();
+        }
+    }
+}

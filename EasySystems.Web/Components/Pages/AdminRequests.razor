@@ -1,0 +1,271 @@
+﻿@page "/admin/requests"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Admin Requests</PageTitle>
+
+<div class="admin-requests-page">
+
+    <section class="admin-hero">
+        <div>
+            <p class="eyebrow">Admin Dashboard</p>
+            <h1>Store Requests</h1>
+            <p>Review customer requests, contact details, package choices, answers, and update request status.</p>
+        </div>
+
+        <button class="admin-load-btn" @onclick="LoadRequests">Refresh requests</button>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="admin-message">@message</div>
+    }
+
+    <section class="admin-stats">
+        <div>
+            <span>@requests.Count</span>
+            <p>Total requests</p>
+        </div>
+        <div>
+            <span>@requests.Count(x => x.Status == "Pending")</span>
+            <p>Pending</p>
+        </div>
+        <div>
+            <span>@requests.Count(x => x.Status == "In Progress")</span>
+            <p>In progress</p>
+        </div>
+        <div>
+            <span>@requests.Count(x => x.Status == "Completed")</span>
+            <p>Completed</p>
+        </div>
+    </section>
+
+    <section class="admin-request-list">
+        @foreach (var request in requests)
+        {
+            <article class="admin-request-card">
+                <div class="request-card-header">
+                    <div>
+                        <span class="status-pill @GetStatusClass(request.Status)">
+                            @request.Status
+                        </span>
+
+                        <h2>@request.StoreName</h2>
+                        <p>@request.BusinessType</p>
+                    </div>
+
+                    <div class="package-badge">
+                        @request.PackageName
+                    </div>
+                </div>
+
+                <div class="request-details-grid">
+                    <div class="detail-box">
+                        <span>Customer</span>
+                        <strong>@request.CustomerFullName</strong>
+                    </div>
+
+                    <div class="detail-box">
+                        <span>Email</span>
+                        <strong>@request.CustomerEmail</strong>
+                    </div>
+
+                    <div class="detail-box">
+                        <span>Phone</span>
+                        <strong>@request.CustomerPhoneNumber</strong>
+                    </div>
+
+                    <div class="detail-box">
+                        <span>Created</span>
+                        <strong>@request.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</strong>
+                    </div>
+                </div>
+
+                <div class="request-notes">
+                    <span>Notes</span>
+                    <p>@request.Notes</p>
+                </div>
+
+                @if (request.Answers.Any())
+                {
+                    <div class="request-answers">
+                        <span>Customer answers</span>
+
+                        <div class="answers-grid">
+                            @foreach (var answer in request.Answers)
+                            {
+                                <div class="answer-box">
+                                    <p>@answer.Question</p>
+                                    <strong>@answer.Answer</strong>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div class="status-update-row">
+                    <label>
+                        Change status
+                        <select @bind="request.SelectedStatus">
+                            @foreach (var status in statuses)
+                            {
+                                <option value="@status">@status</option>
+                            }
+                        </select>
+                    </label>
+
+                    <button @onclick="() => UpdateStatus(request)">
+                        Save status
+                    </button>
+                </div>
+            </article>
+        }
+    </section>
+</div>
+
+@code {
+    private string message = "";
+    private List<StoreRequestViewModel> requests = new();
+
+    private readonly string[] statuses =
+    {
+        "Pending",
+        "In Review",
+        "Approved",
+        "In Progress",
+        "Completed",
+        "Rejected"
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            await LoadRequests();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadRequests()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            message = "You must login as Admin or SuperAdmin first.";
+            return;
+        }
+
+        using var httpRequest = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://localhost:7066/api/StoreRequests");
+
+        httpRequest.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(httpRequest);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            message = $"Could not load requests. Status: {(int)response.StatusCode}";
+            return;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<List<StoreRequestViewModel>>();
+
+        requests = result ?? new();
+
+        foreach (var request in requests)
+        {
+            request.SelectedStatus = request.Status;
+        }
+
+        message = "";
+    }
+
+    private async Task UpdateStatus(StoreRequestViewModel request)
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            message = "You must login first.";
+            return;
+        }
+
+        using var httpRequest = new HttpRequestMessage(
+            HttpMethod.Put,
+            $"https://localhost:7066/api/StoreRequests/{request.Id}/status");
+
+        httpRequest.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        httpRequest.Content = JsonContent.Create(new
+        {
+            status = request.SelectedStatus
+        });
+
+        var response = await Http.SendAsync(httpRequest);
+
+        if (response.IsSuccessStatusCode)
+        {
+            request.Status = request.SelectedStatus;
+            message = $"Status updated for {request.StoreName}.";
+        }
+        else
+        {
+            message = $"Could not update status. Status: {(int)response.StatusCode}";
+        }
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "status-pending",
+            "In Review" => "status-review",
+            "Approved" => "status-approved",
+            "In Progress" => "status-progress",
+            "Completed" => "status-completed",
+            "Rejected" => "status-rejected",
+            _ => "status-pending"
+        };
+    }
+
+    public class StoreRequestViewModel
+    {
+        public int Id { get; set; }
+        public int UserAccountId { get; set; }
+
+        public string CustomerFullName { get; set; } = "";
+        public string CustomerEmail { get; set; } = "";
+        public string CustomerPhoneNumber { get; set; } = "";
+
+        public string StoreName { get; set; } = "";
+        public string BusinessType { get; set; } = "";
+        public string PackageName { get; set; } = "";
+        public string Notes { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string SelectedStatus { get; set; } = "";
+
+        public DateTime CreatedAtUtc { get; set; }
+
+        public List<QuestionAnswerViewModel> Answers { get; set; } = new();
+    }
+
+    public class QuestionAnswerViewModel
+    {
+        public string Question { get; set; } = "";
+        public string Answer { get; set; } = "";
+    }
+}
