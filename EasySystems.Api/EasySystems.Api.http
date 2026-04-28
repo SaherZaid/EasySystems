@@ -1,0 +1,6 @@
+@EasySystems.Api_HostAddress = http://localhost:5108
+
+GET {{EasySystems.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
