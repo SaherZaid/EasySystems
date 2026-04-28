@@ -36,3 +36,259 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.container {
+    max-width: 800px;
+    text-align: center;
+    color: white;
+}
+
+    .container h1 {
+        font-size: 56px;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .container p {
+        font-size: 20px;
+        color: #cbd5e1;
+        line-height: 1.6;
+        margin-bottom: 35px;
+    }
+
+.buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
+
+.btn-secondary {
+    background: white;
+    color: #111827;
+}
+
+    .btn-secondary:hover {
+        background: #e5e7eb;
+    }
+
+.store-page {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 40px 24px;
+    color: #0f172a;
+}
+
+.store-hero {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
+.eyebrow {
+    color: #2563eb;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.store-hero h1 {
+    font-size: 48px;
+    margin: 10px 0;
+}
+
+.store-hero p {
+    color: #64748b;
+    font-size: 18px;
+}
+
+.packages {
+    max-width: 1150px;
+    margin: 0 auto 50px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.package-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 22px;
+    padding: 28px;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+    .package-card:hover,
+    .package-card.selected {
+        border-color: #2563eb;
+        transform: translateY(-3px);
+    }
+
+    .package-card.featured {
+        background: #ecfdf5;
+    }
+
+    .package-card h2 {
+        margin: 0;
+        font-size: 26px;
+    }
+
+.price {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 12px 0;
+}
+
+.package-desc {
+    color: #64748b;
+}
+
+.package-card ul {
+    padding-left: 18px;
+    line-height: 1.9;
+}
+
+.package-card button,
+.submit-btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    background: #0f172a;
+    color: white;
+    padding: 14px 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.badge {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    background: #10b981;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.comparison,
+.store-form {
+    max-width: 1150px;
+    margin: 0 auto 50px;
+    background: white;
+    border-radius: 22px;
+    padding: 30px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+    .comparison table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .comparison th,
+    .comparison td {
+        padding: 16px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+        .comparison th:first-child,
+        .comparison td:first-child {
+            text-align: left;
+        }
+
+.form-intro {
+    color: #64748b;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.store-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.store-form input,
+.store-form select,
+.store-form textarea {
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 15px;
+}
+
+.store-form textarea {
+    min-height: 120px;
+}
+
+.full-width {
+    margin-top: 18px;
+}
+
+.summary-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 22px 0;
+}
+
+.message {
+    margin-top: 18px;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+@media (max-width: 900px) {
+    .packages,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .store-hero h1 {
+        font-size: 36px;
+    }
+
+    .comparison {
+        overflow-x: auto;
+    }
+}

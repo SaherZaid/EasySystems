@@ -1,0 +1,54 @@
+﻿@page "/register"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+@rendermode InteractiveServer
+
+<PageTitle>Register</PageTitle>
+
+<h1>Create Account</h1>
+
+<div class="register-box">
+    <input @bind="model.FirstName" placeholder="First Name" />
+    <input @bind="model.LastName" placeholder="Last Name" />
+    <input @bind="model.Email" placeholder="Email" />
+    <input @bind="model.PhoneNumber" placeholder="Phone Number" />
+
+    <button @onclick="SubmitRegister">Create Account</button>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p>@message</p>
+    }
+</div>
+
+@code {
+    private RegisterModel model = new();
+    private string message = "";
+
+    private async Task SubmitRegister()
+    {
+        var response = await Http.PostAsJsonAsync(
+            "https://localhost:7066/api/Auth/register",
+            model);
+
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Account created successfully.";
+            await Task.Delay(1000);
+            Nav.NavigateTo("/verify");
+        }
+        else
+        {
+            message = "Something went wrong.";
+        }
+    }
+
+    public class RegisterModel
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string PhoneNumber { get; set; } = "";
+    }
+}

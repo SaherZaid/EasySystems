@@ -1,0 +1,80 @@
+﻿@page "/verify"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>Verify Email</PageTitle>
+
+<h1>Verify Email</h1>
+
+<div class="register-box">
+    <input @bind="email" placeholder="Email" />
+
+    <button @onclick="SendCode">Send Code</button>
+
+    <input @bind="code" placeholder="Verification Code" />
+
+    <button @onclick="VerifyCode">Verify</button>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p>@message</p>
+    }
+</div>
+
+@code {
+    private string email = "";
+    private string code = "";
+    private string message = "";
+
+    private async Task SendCode()
+    {
+        var response = await Http.PostAsJsonAsync(
+            "https://localhost:7066/api/Auth/send-code",
+            email);
+
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Verification code sent.";
+        }
+        else
+        {
+            message = "Could not send code.";
+        }
+    }
+
+    private async Task VerifyCode()
+    {
+        var response = await Http.PostAsJsonAsync(
+            "https://localhost:7066/api/Auth/verify-code",
+            new
+            {
+                Email = email,
+                Code = code
+            });
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<VerifyResponse>();
+
+            if (result is not null)
+            {
+                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result.Token);
+            }
+
+            message = "Email verified successfully.";
+            await Task.Delay(1000);
+            Nav.NavigateTo("/dashboard");
+        }
+        else
+        {
+            message = "Invalid or expired code.";
+        }
+    }
+
+    public class VerifyResponse
+    {
+        public string Token { get; set; } = "";
+    }
+}
