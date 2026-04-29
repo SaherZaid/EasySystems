@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using EasySystems.Api.Services;
 
 namespace EasySystems.Api.Controllers;
 
@@ -17,11 +18,16 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
     private readonly IConfiguration _configuration;
+    private readonly EmailService _emailService;
 
-    public AuthController(AppDbContext dbContext, IConfiguration configuration)
+    public AuthController(
+    AppDbContext dbContext,
+    IConfiguration configuration,
+    EmailService emailService)
     {
         _dbContext = dbContext;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     [HttpPost("register")]
@@ -74,11 +80,11 @@ public class AuthController : ControllerBase
 
         _dbContext.EmailVerificationCodes.Add(verification);
         await _dbContext.SaveChangesAsync();
+        await _emailService.SendVerificationCode(email, code);
 
         return Ok(new
         {
-            message = "Verification code created.",
-            code
+            message = "Verification code sent successfully."
         });
     }
 
