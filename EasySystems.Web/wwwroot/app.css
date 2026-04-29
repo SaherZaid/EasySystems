@@ -2422,3 +2422,357 @@ h1:focus {
         font-size: 42px;
     }
 }
+
+.contact-page {
+    background: #f8fafc;
+}
+
+.contact-hero {
+    text-align: center;
+    padding: 90px 20px 50px;
+}
+
+    .contact-hero h1 {
+        font-size: 56px;
+        margin: 12px 0;
+    }
+
+    .contact-hero p {
+        max-width: 760px;
+        margin: auto;
+        color: #64748b;
+        line-height: 1.8;
+        font-size: 18px;
+    }
+
+.contact-layout {
+    max-width: 1250px;
+    margin: auto;
+    padding: 20px 20px 80px;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 28px;
+}
+
+.contact-left {
+    display: grid;
+    gap: 18px;
+}
+
+.contact-card {
+    background: white;
+    border-radius: 26px;
+    padding: 26px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 14px 35px rgba(15,23,42,.05);
+}
+
+    .contact-card span {
+        font-size: 28px;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .contact-card h3 {
+        margin: 0 0 10px;
+        font-size: 24px;
+    }
+
+    .contact-card p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.7;
+    }
+
+.contact-form-box {
+    background: white;
+    border-radius: 30px;
+    padding: 34px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 14px 35px rgba(15,23,42,.05);
+}
+
+    .contact-form-box h2 {
+        margin-top: 0;
+        font-size: 34px;
+    }
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.contact-form-box input,
+.contact-form-box textarea {
+    width: 100%;
+    border: 1px solid #dbe2ea;
+    border-radius: 16px;
+    padding: 15px 16px;
+    margin-top: 16px;
+    font-size: 15px;
+}
+
+.contact-form-box textarea {
+    min-height: 170px;
+    resize: vertical;
+}
+
+.contact-btn {
+    margin-top: 20px;
+    display: inline-block;
+    border: none;
+    background: #2563eb;
+    color: white;
+    padding: 15px 24px;
+    border-radius: 16px;
+    font-weight: 900;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+    .contact-btn:hover {
+        background: #1d4ed8;
+    }
+
+.secondary-btn {
+    background: #0f172a;
+}
+
+    .secondary-btn:hover {
+        background: #1e293b;
+    }
+
+.contact-note {
+    margin-top: 18px;
+    color: #64748b;
+}
+
+    .contact-note a {
+        color: #2563eb;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+.contact-cta {
+    max-width: 1250px;
+    margin: auto;
+    padding: 20px 20px 90px;
+    text-align: center;
+}
+
+    .contact-cta h2 {
+        font-size: 42px;
+        margin-bottom: 10px;
+    }
+
+    .contact-cta p {
+        color: #64748b;
+        margin-bottom: 22px;
+    }
+
+@media (max-width: 1000px) {
+    .contact-layout,
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-hero h1 {
+        font-size: 40px;
+    }
+}
+
+.about-page,
+.faq-page {
+    background: #f8fafc;
+    min-height: 100vh;
+}
+
+.about-hero,
+.faq-hero {
+    text-align: center;
+    padding: 90px 20px 50px;
+}
+
+    .about-hero h1,
+    .faq-hero h1 {
+        font-size: 56px;
+        max-width: 900px;
+        margin: 12px auto;
+    }
+
+    .about-hero p,
+    .faq-hero p {
+        max-width: 780px;
+        margin: auto;
+        color: #64748b;
+        font-size: 18px;
+        line-height: 1.8;
+    }
+
+.about-grid {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px 20px 60px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.about-card,
+.faq-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 26px;
+    padding: 30px;
+    box-shadow: 0 14px 35px rgba(15,23,42,.05);
+}
+
+    .about-card h2,
+    .faq-item h3 {
+        margin-top: 0;
+    }
+
+    .about-card p,
+    .faq-item p {
+        color: #64748b;
+        line-height: 1.7;
+    }
+
+.about-values {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px 20px 90px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+    .about-values div {
+        background: #0f172a;
+        color: white;
+        border-radius: 28px;
+        padding: 30px;
+    }
+
+    .about-values span {
+        display: inline-flex;
+        width: 44px;
+        height: 44px;
+        background: #2563eb;
+        border-radius: 14px;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        margin-bottom: 18px;
+    }
+
+    .about-values p {
+        color: #cbd5e1;
+        line-height: 1.7;
+    }
+
+.faq-list {
+    max-width: 950px;
+    margin: auto;
+    padding: 20px 20px 90px;
+    display: grid;
+    gap: 18px;
+}
+
+@media (max-width: 1000px) {
+    .about-grid,
+    .about-values {
+        grid-template-columns: 1fr;
+    }
+
+    .about-hero h1,
+    .faq-hero h1 {
+        font-size: 40px;
+    }
+}
+
+
+.site-footer {
+    background: #0f172a;
+    color: white;
+    margin-top: 80px;
+}
+
+.footer-grid {
+    max-width: 1250px;
+    margin: auto;
+    padding: 70px 20px 50px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 30px;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+    .footer-logo span {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg,#2563eb,#60a5fa);
+        font-weight: 900;
+        font-size: 22px;
+    }
+
+    .footer-logo strong {
+        font-size: 24px;
+        font-weight: 900;
+    }
+
+.footer-brand p {
+    color: #cbd5e1;
+    line-height: 1.8;
+    max-width: 420px;
+}
+
+.footer-column h3 {
+    margin-top: 0;
+    font-size: 18px;
+    margin-bottom: 18px;
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+    .footer-column a,
+    .footer-column span {
+        color: #cbd5e1;
+        text-decoration: none;
+        transition: .2s ease;
+    }
+
+        .footer-column a:hover {
+            color: white;
+        }
+
+.footer-bottom {
+    border-top: 1px solid rgba(255,255,255,.08);
+    text-align: center;
+    padding: 22px;
+}
+
+    .footer-bottom p {
+        margin: 0;
+        color: #94a3b8;
+    }
+
+@media (max-width: 1000px) {
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+}

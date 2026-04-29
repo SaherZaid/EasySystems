@@ -1,0 +1,117 @@
+﻿@page "/contact"
+@rendermode InteractiveServer
+@inject HttpClient Http
+
+<PageTitle>Contact Us | EasySystems</PageTitle>
+
+<div class="contact-page">
+
+    <section class="contact-hero">
+        <p class="eyebrow">EasySystems</p>
+        <h1>Let’s build your next online store</h1>
+        <p>
+            Have questions, need a custom quote, or want to discuss your business?
+            Contact us and we’ll reply as soon as possible.
+        </p>
+    </section>
+
+    <section class="contact-layout">
+
+        <div class="contact-left">
+
+            <div class="contact-card">
+                <span>📧</span>
+                <h3>Email</h3>
+                <p>rentconnectab@gmail.com</p>
+            </div>
+
+            <div class="contact-card">
+                <span>💬</span>
+                <h3>WhatsApp</h3>
+                <p>Fast replies for project questions</p>
+            </div>
+
+            <div class="contact-card">
+                <span>⏱️</span>
+                <h3>Response Time</h3>
+                <p>Usually within 24 hours</p>
+            </div>
+
+        </div>
+
+        <div class="contact-form-box">
+
+            <h2>Send a message</h2>
+
+            <div class="contact-grid">
+                <input @bind="model.Name" placeholder="Your name" />
+                <input @bind="model.Email" placeholder="Email address" />
+
+                <input @bind="model.Phone" placeholder="Phone number" />
+                <input @bind="model.Business" placeholder="Business name" />
+            </div>
+
+            <input @bind="model.Subject" placeholder="Subject" />
+
+            <textarea @bind="model.Message"
+                      placeholder="Tell us about your project..."></textarea>
+
+            <button class="contact-btn"
+                    @onclick="SendMessage"
+                    disabled="@isLoading">
+
+                @(isLoading ? "Sending..." : "Send Message")
+
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(statusMessage))
+            {
+                <p class="success-msg">@statusMessage</p>
+            }
+
+        </div>
+
+    </section>
+
+</div>
+
+@code {
+
+    ContactModel model = new();
+
+    bool isLoading = false;
+    string statusMessage = "";
+
+    async Task SendMessage()
+    {
+        statusMessage = "";
+        isLoading = true;
+
+        var response = await Http.PostAsJsonAsync(
+            "https://localhost:7066/api/Contact",
+            model);
+
+        isLoading = false;
+
+        if (response.IsSuccessStatusCode)
+        {
+            statusMessage = "Your message has been sent successfully ✔";
+
+            model = new();
+        }
+        else
+        {
+            statusMessage = "Failed to send message.";
+        }
+    }
+
+    public class ContactModel
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Business { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+}

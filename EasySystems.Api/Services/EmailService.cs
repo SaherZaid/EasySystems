@@ -12,6 +12,16 @@ public class EmailService
         _configuration = configuration;
     }
 
+    public async Task SendCustomEmail(string toEmail, string subject, string htmlBody)
+    {
+        var html = BuildEmailHtml(
+            title: subject,
+            subtitle: "New Contact Message",
+            body: htmlBody);
+
+        await SendEmail(toEmail, subject, html);
+    }
+
     public async Task SendVerificationCode(string toEmail, string code)
     {
         var html = BuildEmailHtml(
