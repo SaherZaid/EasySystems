@@ -1,7 +1,5 @@
 ﻿@inherits LayoutComponentBase
 
-@inject IJSRuntime JS
-
 <header class="site-header">
     <a href="/" class="brand">
         <span class="brand-icon">E</span>
@@ -11,13 +9,10 @@
     <nav class="main-nav">
         <a href="/">Home</a>
         <a href="/create-store">Create Store</a>
-        <a href="/dashboard">Dashboard</a>
-
-        <AdminNavLink />
     </nav>
 
     <div class="header-actions">
-        <a href="/login" class="login-link">Login</a>
+        <HeaderAuth />
         <a href="/create-store" class="header-cta">Start Now</a>
     </div>
 </header>
@@ -25,10 +20,3 @@
 <main>
     @Body
 </main>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
-

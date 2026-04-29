@@ -1,0 +1,108 @@
+﻿@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject EasySystems.Web.Services.AuthStateService Auth
+
+@if (!loaded)
+{
+    <span class="login-link">...</span>
+}
+else if (!Auth.IsLoggedIn)
+{
+    <a href="/login" class="login-link">Login</a>
+}
+else
+{
+    <div class="user-menu">
+        <button class="user-menu-button" @onclick="ToggleMenu">
+            <span class="user-avatar">@firstLetter</span>
+            <span>@displayName</span>
+            <span>▾</span>
+        </button>
+
+        @if (menuOpen)
+        {
+            <div class="user-dropdown">
+                <a href="/dashboard">Dashboard</a>
+                <a href="/profile">Profile</a>
+
+                @if (Auth.IsAdmin)
+                {
+                    <a href="/admin/requests">Admin Panel</a>
+                }
+
+                <button @onclick="Logout">Logout</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    bool loaded;
+    bool menuOpen;
+
+    string displayName = "Account";
+    string firstLetter = "U";
+
+    protected override void OnInitialized()
+    {
+        Auth.OnChange += RefreshUi;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+            var email = await JS.InvokeAsync<string>("localStorage.getItem", "userEmail");
+            var firstName = await JS.InvokeAsync<string>("localStorage.getItem", "firstName");
+
+            Auth.SetUser(
+                !string.IsNullOrWhiteSpace(token),
+                role ?? "");
+
+            displayName =
+                !string.IsNullOrWhiteSpace(firstName)
+                    ? firstName
+                    : (!string.IsNullOrWhiteSpace(email)
+                        ? email.Split('@')[0]
+                        : "Account");
+
+            firstLetter = displayName.Substring(0, 1).ToUpper();
+
+            loaded = true;
+            StateHasChanged();
+        }
+    }
+
+    void ToggleMenu()
+    {
+        menuOpen = !menuOpen;
+    }
+
+    void RefreshUi()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userRole");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userEmail");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "firstName");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "lastName");
+
+        Auth.Logout();
+
+        menuOpen = false;
+
+        Nav.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        Auth.OnChange -= RefreshUi;
+    }
+}

@@ -1,4 +1,5 @@
 using EasySystems.Web.Components;
+using EasySystems.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddScoped<AuthStateService>();
+
 
 var app = builder.Build();
 

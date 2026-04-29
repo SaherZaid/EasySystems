@@ -1,0 +1,155 @@
+﻿@page "/profile"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<PageTitle>Profile</PageTitle>
+
+<div class="profile-page">
+
+    <section class="profile-card">
+
+        <div class="profile-top">
+            <div class="avatar-circle">
+                @FirstLetter
+            </div>
+
+            <div>
+                <p class="eyebrow">My Account</p>
+                <h1>@($"{model.FirstName} {model.LastName}")</h1>
+                <p>@model.Email</p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="admin-message">@message</div>
+        }
+
+        <div class="profile-grid">
+
+            <div class="profile-box">
+                <span>First Name</span>
+                <input @bind="model.FirstName" />
+            </div>
+
+            <div class="profile-box">
+                <span>Last Name</span>
+                <input @bind="model.LastName" />
+            </div>
+
+            <div class="profile-box">
+                <span>Email</span>
+                <input @bind="model.Email" />
+            </div>
+
+            <div class="profile-box">
+                <span>Phone</span>
+                <input @bind="model.PhoneNumber" />
+            </div>
+
+            <div class="profile-box">
+                <span>Role</span>
+                <strong>@model.Role</strong>
+            </div>
+
+            <div class="profile-box">
+                <span>Status</span>
+                <strong>Active</strong>
+            </div>
+
+        </div>
+
+        <button class="auth-btn" @onclick="SaveProfile">
+            Save Changes
+        </button>
+
+    </section>
+
+</div>
+
+@code {
+    private string message = "";
+
+    private ProfileModel model = new();
+
+    private string FirstLetter =>
+        string.IsNullOrWhiteSpace(model.FirstName)
+            ? "U"
+            : model.FirstName.Substring(0, 1).ToUpper();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProfile();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadProfile()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://localhost:7066/api/Profile/me");
+
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            message = "Could not load profile.";
+            return;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<ProfileModel>();
+
+        if (result is not null)
+            model = result;
+    }
+
+    private async Task SaveProfile()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            "https://localhost:7066/api/Profile/update");
+
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        request.Content = JsonContent.Create(new
+        {
+            model.FirstName,
+            model.LastName,
+            model.Email,
+            model.PhoneNumber
+        });
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "userEmail", model.Email);
+            message = "Profile updated successfully.";
+        }
+        else
+        {
+            message = "Could not update profile.";
+        }
+    }
+
+    public class ProfileModel
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string PhoneNumber { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
+}

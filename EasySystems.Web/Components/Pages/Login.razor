@@ -3,38 +3,75 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject EasySystems.Web.Services.AuthStateService Auth
+
 
 <PageTitle>Login</PageTitle>
 
-<h1>Login</h1>
+<div class="auth-page">
 
-<div class="register-box">
-    <input @bind="email" placeholder="Email" />
+    <section class="auth-card">
 
-    <button @onclick="SendCode">Send login code</button>
+        <div class="auth-left">
+            <p class="eyebrow">EasySystems</p>
+            <h1>Login instantly</h1>
+            <p>
+                No password needed. Enter your email, receive a secure code,
+                and access your dashboard in seconds.
+            </p>
 
-    @if (!string.IsNullOrWhiteSpace(devCode))
-    {
-        <p style="font-weight:bold; color:#2563eb;">
-            Test code: @devCode
-        </p>
-    }
+            <ul>
+                <li>✓ Fast passwordless login</li>
+                <li>✓ Secure email code</li>
+                <li>✓ Access requests dashboard</li>
+                <li>✓ Admin access by role</li>
+            </ul>
+        </div>
 
-    <input @bind="code" placeholder="Login code" />
+        <div class="auth-right">
 
-    <button @onclick="LoginWithCode">Login</button>
+            <h2>Login</h2>
 
-    @if (!string.IsNullOrWhiteSpace(message))
-    {
-        <p>@message</p>
-    }
+            <input @bind="email" placeholder="Email address" />
+
+            <button class="auth-btn-secondary" @onclick="SendCode">
+                Send login code
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(devCode))
+            {
+                <div class="dev-code-box">
+                    Test code: <strong>@devCode</strong>
+                </div>
+            }
+
+            <input @bind="code" placeholder="Enter code" />
+
+            <button class="auth-btn" @onclick="LoginWithCode">
+                Login now
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(message))
+            {
+                <p class="auth-message">@message</p>
+            }
+
+            <p class="auth-link">
+                No account?
+                <a href="/register">Create account</a>
+            </p>
+
+        </div>
+
+    </section>
+
 </div>
 
 @code {
     private string email = "";
     private string code = "";
-    private string message = "";
     private string devCode = "";
+    private string message = "";
 
     private async Task SendCode()
     {
@@ -76,9 +113,12 @@
                 await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result.Token);
                 await JS.InvokeVoidAsync("localStorage.setItem", "userRole", result.Role);
                 await JS.InvokeVoidAsync("localStorage.setItem", "userEmail", result.Email);
+
+                Auth.SetUser(true, result.Role);
             }
 
             message = "Login successful.";
+
             await Task.Delay(700);
             Nav.NavigateTo("/dashboard");
         }
