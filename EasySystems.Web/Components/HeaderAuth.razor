@@ -14,6 +14,7 @@ else if (!Auth.IsLoggedIn)
 else
 {
     <div class="user-menu">
+
         <button class="user-menu-button" @onclick="ToggleMenu">
             <span class="user-avatar">@firstLetter</span>
             <span>@displayName</span>
@@ -23,26 +24,45 @@ else
         @if (menuOpen)
         {
             <div class="user-dropdown">
+
                 <a href="/dashboard">Dashboard</a>
+
                 <a href="/profile">Profile</a>
 
-                @if (Auth.IsAdmin)
+                @if (IsAdminOrSuperAdmin)
                 {
                     <a href="/admin/requests">Admin Panel</a>
                 }
 
-                <button @onclick="Logout">Logout</button>
+                @if (IsSuperAdmin)
+                {
+                    <a href="/admin/users">Users & Roles</a>
+                }
+
+                <button @onclick="Logout">
+                    Logout
+                </button>
+
             </div>
         }
+
     </div>
 }
 
 @code {
+
     bool loaded;
     bool menuOpen;
 
     string displayName = "Account";
     string firstLetter = "U";
+    string role = "";
+
+    bool IsAdminOrSuperAdmin =>
+        role == "Admin" || role == "SuperAdmin";
+
+    bool IsSuperAdmin =>
+        role == "SuperAdmin";
 
     protected override void OnInitialized()
     {
@@ -53,25 +73,42 @@ else
     {
         if (firstRender)
         {
-            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
-            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
-            var email = await JS.InvokeAsync<string>("localStorage.getItem", "userEmail");
-            var firstName = await JS.InvokeAsync<string>("localStorage.getItem", "firstName");
+            var token =
+                await JS.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "authToken");
+
+            role =
+                await JS.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "userRole") ?? "";
+
+            var email =
+                await JS.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "userEmail");
+
+            var firstName =
+                await JS.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "firstName");
 
             Auth.SetUser(
                 !string.IsNullOrWhiteSpace(token),
-                role ?? "");
+                role);
 
             displayName =
                 !string.IsNullOrWhiteSpace(firstName)
-                    ? firstName
-                    : (!string.IsNullOrWhiteSpace(email)
-                        ? email.Split('@')[0]
-                        : "Account");
+                ? firstName
+                : !string.IsNullOrWhiteSpace(email)
+                    ? email.Split('@')[0]
+                    : "Account";
 
-            firstLetter = displayName.Substring(0, 1).ToUpper();
+            firstLetter =
+                displayName.Substring(0, 1).ToUpper();
 
             loaded = true;
+
             StateHasChanged();
         }
     }

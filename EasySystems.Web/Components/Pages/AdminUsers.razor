@@ -1,0 +1,159 @@
+﻿@page "/admin/users"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Manage Users | EasySystems</PageTitle>
+
+<div class="admin-users-page">
+
+    <section class="admin-users-hero">
+        <div>
+            <p class="eyebrow">Super Admin</p>
+            <h1>Manage Users</h1>
+            <p>Control user roles and permissions across EasySystems.</p>
+        </div>
+
+        <button class="admin-refresh" @onclick="LoadUsers">Refresh</button>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="admin-message">@message</div>
+    }
+
+    <section class="users-panel">
+        @foreach (var user in users)
+        {
+            <article class="user-role-card">
+                <div class="user-role-left">
+                    <div class="customer-avatar">
+                        @GetInitial(user.FullName)
+                    </div>
+
+                    <div>
+                        <h3>@user.FullName</h3>
+                        <p>@user.Email</p>
+                        <span class="verified-text">
+                            @(user.IsEmailVerified ? "Verified" : "Not verified")
+                        </span>
+                    </div>
+                </div>
+
+                <div class="user-role-actions">
+                    <select @bind="user.SelectedRole">
+                        <option>User</option>
+                        <option>Admin</option>
+                        <option>SuperAdmin</option>
+                    </select>
+
+                    <button @onclick="() => UpdateRole(user)">
+                        Save Role
+                    </button>
+                </div>
+            </article>
+        }
+    </section>
+
+</div>
+
+@code {
+    private string message = "";
+    private List<UserViewModel> users = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+
+            if (role != "SuperAdmin")
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            await LoadUsers();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://localhost:7066/api/Auth/users");
+
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            message = $"Could not load users. Status: {(int)response.StatusCode}";
+            return;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<List<UserViewModel>>();
+
+        users = result ?? new();
+
+        foreach (var user in users)
+        {
+            user.SelectedRole = user.Role;
+        }
+
+        message = "";
+    }
+
+    private async Task UpdateRole(UserViewModel user)
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://localhost:7066/api/Auth/update-role");
+
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        request.Content = JsonContent.Create(new
+        {
+            email = user.Email,
+            role = user.SelectedRole
+        });
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            user.Role = user.SelectedRole;
+            message = $"Role updated for {user.Email}.";
+        }
+        else
+        {
+            message = $"Could not update role. Status: {(int)response.StatusCode}";
+        }
+    }
+
+    private string GetInitial(string value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "?"
+            : value.Substring(0, 1).ToUpper();
+    }
+
+    public class UserViewModel
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
+        public string SelectedRole { get; set; } = "";
+        public bool IsEmailVerified { get; set; }
+    }
+}

@@ -30,6 +30,26 @@ public class AuthController : ControllerBase
         _emailService = emailService;
     }
 
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUsers()
+    {
+        var users = await _dbContext.UserAccounts
+            .OrderByDescending(x => x.Id)
+            .Select(x => new
+            {
+                x.Id,
+                FullName = x.FirstName + " " + x.LastName,
+                x.Email,
+                x.Role,
+                x.IsEmailVerified
+            })
+            .ToListAsync();
+
+        return Ok(users);
+    }
+
+
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterUserRequest request)
     {

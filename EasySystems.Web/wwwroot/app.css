@@ -2776,3 +2776,115 @@ h1:focus {
         grid-template-columns: 1fr;
     }
 }
+
+.admin-users-page {
+    min-height: 100vh;
+    background: #f8fafc;
+    padding: 50px 8%;
+}
+
+.admin-users-hero {
+    background: linear-gradient(135deg,#0f172a,#1e3a8a);
+    color: white;
+    border-radius: 30px;
+    padding: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+    .admin-users-hero h1 {
+        font-size: 46px;
+        margin: 8px 0;
+    }
+
+    .admin-users-hero p {
+        color: #dbeafe;
+    }
+
+.users-panel {
+    display: grid;
+    gap: 18px;
+}
+
+.user-role-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 12px 35px rgba(15,23,42,.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 22px;
+}
+
+.user-role-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+    .user-role-left h3 {
+        margin: 0 0 5px;
+        font-size: 22px;
+    }
+
+    .user-role-left p {
+        margin: 0;
+        color: #64748b;
+    }
+
+.verified-text {
+    display: inline-flex;
+    margin-top: 8px;
+    color: #2563eb;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.user-role-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+    .user-role-actions select {
+        padding: 13px 16px;
+        border-radius: 14px;
+        border: 1px solid #cbd5e1;
+        font-weight: 800;
+    }
+
+    .user-role-actions button {
+        border: none;
+        background: #2563eb;
+        color: white;
+        padding: 13px 18px;
+        border-radius: 14px;
+        font-weight: 900;
+        cursor: pointer;
+    }
+
+        .user-role-actions button:hover {
+            background: #1d4ed8;
+        }
+
+@media (max-width: 900px) {
+    .admin-users-hero,
+    .user-role-card {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .user-role-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .admin-users-hero h1 {
+        font-size: 34px;
+    }
+}

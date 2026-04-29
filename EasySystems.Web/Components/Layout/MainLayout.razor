@@ -1,22 +1,37 @@
 ﻿@inherits LayoutComponentBase
 
 <header class="site-header">
+
     <a href="/" class="brand">
         <span class="brand-icon">E</span>
         <span>EasySystems</span>
     </a>
 
     <nav class="main-nav">
+
         <a href="/">Home</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/about">About</a>
+        <a href="/faq">FAQ</a>
+        <a href="/contact">Contact</a>
         <a href="/create-store">Create Store</a>
+
     </nav>
 
     <div class="header-actions">
+
         <HeaderAuth />
-        <a href="/create-store" class="header-cta">Start Now</a>
+
+        <a href="/create-store" class="header-cta">
+            Start Now
+        </a>
+
     </div>
+
 </header>
 
 <main>
     @Body
 </main>
+
+<SiteFooter />
