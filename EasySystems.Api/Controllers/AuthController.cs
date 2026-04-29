@@ -66,7 +66,28 @@ public class AuthController : ControllerBase
             .FirstOrDefaultAsync(x => x.Email == email);
 
         if (user is null)
-            return NotFound("User not found.");
+        {
+            await Task.Delay(800);
+
+            return Ok(new
+            {
+                message = "If this email exists, a verification code has been sent."
+            });
+        }
+
+        var recentCode = await _dbContext.EmailVerificationCodes
+    .Where(x =>
+        x.UserAccountId == user.Id &&
+        x.CreatedAtUtc > DateTime.UtcNow.AddSeconds(-30))
+    .OrderByDescending(x => x.CreatedAtUtc)
+    .FirstOrDefaultAsync();
+
+        if (recentCode is not null)
+        {
+            return BadRequest("Please wait 30 seconds before requesting another code.");
+        }
+
+
 
         var code = new Random().Next(100000, 999999).ToString();
 
@@ -84,7 +105,7 @@ public class AuthController : ControllerBase
 
         return Ok(new
         {
-            message = "Verification code sent successfully."
+            message = "If this email exists, a verification code has been sent."
         });
     }
 
@@ -106,7 +127,20 @@ public class AuthController : ControllerBase
             .FirstOrDefaultAsync();
 
         if (verification is null)
+        {
+            var failedAttempts = await _dbContext.EmailVerificationCodes
+                .CountAsync(x =>
+                    x.UserAccountId == user.Id &&
+                    x.IsUsed == false &&
+                    x.CreatedAtUtc > DateTime.UtcNow.AddMinutes(-10));
+
+            if (failedAttempts >= 5)
+            {
+                return BadRequest("Too many failed attempts. Try again in 10 minutes.");
+            }
+
             return BadRequest("Invalid verification code.");
+        }
 
         if (verification.ExpiresAtUtc < DateTime.UtcNow)
             return BadRequest("Verification code has expired.");

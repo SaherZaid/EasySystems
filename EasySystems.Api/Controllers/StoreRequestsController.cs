@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using EasySystems.Api.Services;
 using EasySystems.Application.Dtos;
 using EasySystems.Domain.Entities;
 using EasySystems.Infrastructure.Data;
@@ -14,10 +15,17 @@ namespace EasySystems.Api.Controllers;
 public class StoreRequestsController : ControllerBase
 {
     private readonly AppDbContext _dbContext;
+    private readonly EmailService _emailService;
+    private readonly IConfiguration _configuration;
 
-    public StoreRequestsController(AppDbContext dbContext)
+    public StoreRequestsController(
+        AppDbContext dbContext,
+        EmailService emailService,
+        IConfiguration configuration)
     {
         _dbContext = dbContext;
+        _emailService = emailService;
+        _configuration = configuration;
     }
 
     [HttpPost]
@@ -26,6 +34,12 @@ public class StoreRequestsController : ControllerBase
         var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (!int.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        var user = await _dbContext.UserAccounts
+            .FirstOrDefaultAsync(x => x.Id == userId);
+
+        if (user is null)
             return Unauthorized();
 
         var storeRequest = new StoreRequest
@@ -52,6 +66,25 @@ public class StoreRequestsController : ControllerBase
         }
 
         await _dbContext.SaveChangesAsync();
+
+        var clientName = $"{user.FirstName} {user.LastName}".Trim();
+
+        await _emailService.SendProjectRequestConfirmationToClient(
+            toEmail: user.Email,
+            clientName: clientName,
+            storeName: storeRequest.StoreName,
+            packageName: storeRequest.PackageName,
+            status: storeRequest.Status);
+
+        await _emailService.SendNewProjectRequestToAdmin(
+            adminEmail: "rentconnectab@gmail.com",
+            clientName: clientName,
+            clientEmail: user.Email,
+            clientPhone: user.PhoneNumber,
+            storeName: storeRequest.StoreName,
+            businessType: storeRequest.BusinessType,
+            packageName: storeRequest.PackageName,
+            notes: storeRequest.Notes);
 
         return Ok(new
         {
@@ -96,7 +129,6 @@ public class StoreRequestsController : ControllerBase
         return Ok(requests);
     }
 
-
     [Authorize(Roles = "Admin,SuperAdmin")]
     [HttpPut("{id:int}/status")]
     public async Task<IActionResult> UpdateStatus(
@@ -122,9 +154,23 @@ public class StoreRequestsController : ControllerBase
         if (storeRequest is null)
             return NotFound("Store request not found.");
 
+        var user = await _dbContext.UserAccounts
+            .FirstOrDefaultAsync(x => x.Id == storeRequest.UserAccountId);
+
+        if (user is null)
+            return NotFound("User not found.");
+
         storeRequest.Status = request.Status;
 
         await _dbContext.SaveChangesAsync();
+
+        var clientName = $"{user.FirstName} {user.LastName}".Trim();
+
+        await _emailService.SendProjectStatusUpdateToClient(
+            toEmail: user.Email,
+            clientName: clientName,
+            storeName: storeRequest.StoreName,
+            status: storeRequest.Status);
 
         return Ok(new
         {

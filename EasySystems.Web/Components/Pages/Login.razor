@@ -114,13 +114,13 @@
             code = devCode;
 
             codeSent = true;
-            message = "Verification token created.";
+            message = "Verification code was sent to your mail.";
 
             await StartResendTimer();
         }
         else
         {
-            message = "Could not create token.";
+            message = await response.Content.ReadAsStringAsync();
         }
     }
 

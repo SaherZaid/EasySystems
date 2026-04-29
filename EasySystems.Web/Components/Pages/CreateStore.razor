@@ -20,8 +20,22 @@
         <h2>Business Information</h2>
 
         <div class="pro-grid">
-            <input @bind="storeName" placeholder="Store name" />
-            <input @bind="businessType" placeholder="What do you sell?" />
+            <input @bind="storeName"
+                   class="@GetErrorClass(storeName)"
+                   placeholder="Store name *" />
+
+            @if (IsEmpty(storeName))
+            {
+                <small class="field-error">Store name is required</small>
+            }
+            <input @bind="businessType"
+                   class="@GetErrorClass(businessType)"
+                   placeholder="What do you sell? *" />
+
+            @if (IsEmpty(businessType))
+            {
+                <small class="field-error">Business type is required</small>
+            }
 
             <select @bind="productCount">
                 <option>1-20 products</option>
@@ -46,9 +60,22 @@
                 <option>I need logo</option>
             </select>
 
-            <input @bind="brandColors" placeholder="Preferred colors" />
+            <input @bind="brandColors"
+                   class="@GetErrorClass(brandColors)"
+                   placeholder="Preferred colors *" />
 
-            <input @bind="exampleSites" placeholder="Sites you like" />
+            @if (IsEmpty(brandColors))
+            {
+                <small class="field-error">Please enter colors</small>
+            }
+            <input @bind="exampleSites"
+                   class="@GetErrorClass(exampleSites)"
+                   placeholder="Sites you like *" />
+
+            @if (IsEmpty(exampleSites))
+            {
+                <small class="field-error">Please add examples</small>
+            }
 
             <select @bind="designStyle">
                 <option>Luxury</option>
@@ -85,8 +112,22 @@
         <h2>Business Plan</h2>
 
         <div class="pro-grid">
-            <input @bind="budget" placeholder="Budget (SEK)" />
-            <input @bind="launchDate" placeholder="Preferred launch date" />
+            <input @bind="budget"
+                   class="@GetErrorClass(budget)"
+                   placeholder="Budget (SEK) *" />
+
+            @if (IsEmpty(budget))
+            {
+                <small class="field-error">Budget is required</small>
+            }
+            <input @bind="launchDate"
+                   class="@GetErrorClass(launchDate)"
+                   placeholder="Preferred launch date *" />
+
+            @if (IsEmpty(launchDate))
+            {
+                <small class="field-error">Launch date required</small>
+            }
 
             <select @bind="packageName">
                 <option>Starter</option>
@@ -94,23 +135,46 @@
                 <option>Premium</option>
             </select>
 
-            <input @bind="domain" placeholder="Do you have domain?" />
+            <input @bind="domain"
+                   class="@GetErrorClass(domain)"
+                   placeholder="Do you have domain? *" />
+
+            @if (IsEmpty(domain))
+            {
+                <small class="field-error">Please answer this field</small>
+            }
         </div>
 
         <h2>Extra Notes</h2>
 
-        <textarea @bind="notes" placeholder="Write anything important here..."></textarea>
+        <textarea @bind="notes"
+                  class="@GetErrorClass(notes)"
+                  placeholder="Write anything important here... *"></textarea>
 
-        <button class="submit-btn-pro" @onclick="SubmitRequest">
-            Submit Store Request
+        @if (IsEmpty(notes))
+        {
+            <small class="field-error">Please write notes</small>
+        }
+
+        <button class="submit-btn-pro"
+                @onclick="SubmitRequest"
+                disabled="@isLoading">
+
+            @(isLoading ? "Sending Request..." : "Submit Store Request")
+
         </button>
 
-        <p class="success-msg">@message</p>
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <p class="success-msg">@message</p>
+        }
 
     </section>
+
 </div>
 
 @code {
+
     string storeName = "";
     string businessType = "";
     string productCount = "1-20 products";
@@ -128,11 +192,43 @@
     string packageName = "Business";
     string domain = "";
     string notes = "";
+
     string message = "";
+    bool isLoading = false;
+
+    bool triedSubmit = false;
+
+    bool IsEmpty(string value)
+    {
+        return triedSubmit &&
+               string.IsNullOrWhiteSpace(value);
+    }
+
+    string GetErrorClass(string value)
+    {
+        return IsEmpty(value)
+            ? "input-error"
+            : "";
+    }
 
     async Task SubmitRequest()
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        triedSubmit = true;
+
+        message = "";
+
+        if (!ValidateForm())
+        {
+            message = "Please complete all required fields.";
+            return;
+        }
+
+        isLoading = true;
+
+        var token = await JS.InvokeAsync<string>(
+            "localStorage.getItem",
+            "authToken");
 
         using var req = new HttpRequestMessage(
             HttpMethod.Post,
@@ -149,26 +245,71 @@
             notes,
             answers = new[]
             {
-                new { question = "Product Count", answer = productCount },
-                new { question = "Languages", answer = languages },
-                new { question = "Logo", answer = hasLogo },
-                new { question = "Colors", answer = brandColors },
-                new { question = "Example Sites", answer = exampleSites },
-                new { question = "Design Style", answer = designStyle },
-                new { question = "Payment", answer = payment },
-                new { question = "Shipping", answer = shipping },
-                new { question = "Accounts", answer = accounts },
-                new { question = "Discounts", answer = discounts },
-                new { question = "Budget", answer = budget },
-                new { question = "Launch Date", answer = launchDate },
-                new { question = "Domain", answer = domain }
-            }
+            new { question = "Product Count", answer = productCount },
+            new { question = "Languages", answer = languages },
+            new { question = "Logo", answer = hasLogo },
+            new { question = "Colors", answer = brandColors },
+            new { question = "Example Sites", answer = exampleSites },
+            new { question = "Design Style", answer = designStyle },
+            new { question = "Payment", answer = payment },
+            new { question = "Shipping", answer = shipping },
+            new { question = "Accounts", answer = accounts },
+            new { question = "Discounts", answer = discounts },
+            new { question = "Budget", answer = budget },
+            new { question = "Launch Date", answer = launchDate },
+            new { question = "Domain", answer = domain }
+        }
         });
 
         var response = await Http.SendAsync(req);
 
-        message = response.IsSuccessStatusCode
-            ? "Request submitted successfully."
-            : "Failed to submit request.";
+        isLoading = false;
+
+        if (response.IsSuccessStatusCode)
+        {
+            message = "Your request has been sent successfully ✔";
+
+            ResetForm();
+        }
+        else
+        {
+            message = "Failed to submit request.";
+        }
     }
+
+    bool ValidateForm()
+    {
+        return
+            !string.IsNullOrWhiteSpace(storeName) &&
+            !string.IsNullOrWhiteSpace(businessType) &&
+            !string.IsNullOrWhiteSpace(brandColors) &&
+            !string.IsNullOrWhiteSpace(exampleSites) &&
+            !string.IsNullOrWhiteSpace(budget) &&
+            !string.IsNullOrWhiteSpace(launchDate) &&
+            !string.IsNullOrWhiteSpace(domain) &&
+            !string.IsNullOrWhiteSpace(notes);
+    }
+
+    void ResetForm()
+    {
+        triedSubmit = false;
+        storeName = "";
+        businessType = "";
+        productCount = "1-20 products";
+        languages = "Swedish";
+        hasLogo = "I have logo";
+        brandColors = "";
+        exampleSites = "";
+        designStyle = "Modern";
+        payment = "Yes online payment";
+        shipping = "Need shipping";
+        accounts = "Need customer accounts";
+        discounts = "Need discount codes";
+        budget = "";
+        launchDate = "";
+        packageName = "Business";
+        domain = "";
+        notes = "";
+    }
+
 }

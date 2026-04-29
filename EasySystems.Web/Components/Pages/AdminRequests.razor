@@ -4,129 +4,259 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
-<PageTitle>Admin Requests</PageTitle>
+<PageTitle>Admin Dashboard</PageTitle>
 
-<div class="admin-requests-page">
+<div class="admin-saas">
 
-    <section class="admin-hero">
-        <div>
-            <p class="eyebrow">Admin Dashboard</p>
-            <h1>Store Requests</h1>
-            <p>Review customer requests, contact details, package choices, answers, and update request status.</p>
+    <aside class="admin-sidebar">
+        <div class="admin-logo">
+            <span>E</span>
+            <strong>EasySystems</strong>
         </div>
 
-        <button class="admin-load-btn" @onclick="LoadRequests">Refresh requests</button>
-    </section>
+        <nav>
+            <a class="active">Requests</a>
+            <a>Customers</a>
+            <a>Analytics</a>
+            <a>Settings</a>
+        </nav>
+    </aside>
 
-    @if (!string.IsNullOrWhiteSpace(message))
-    {
-        <div class="admin-message">@message</div>
-    }
+    <main class="admin-main">
 
-    <section class="admin-stats">
-        <div>
-            <span>@requests.Count</span>
-            <p>Total requests</p>
-        </div>
-        <div>
-            <span>@requests.Count(x => x.Status == "Pending")</span>
-            <p>Pending</p>
-        </div>
-        <div>
-            <span>@requests.Count(x => x.Status == "In Progress")</span>
-            <p>In progress</p>
-        </div>
-        <div>
-            <span>@requests.Count(x => x.Status == "Completed")</span>
-            <p>Completed</p>
-        </div>
-    </section>
+        <header class="admin-topbar">
+            <div>
+                <p class="eyebrow">Admin Dashboard</p>
+                <h1>Project Requests</h1>
+            </div>
 
-    <section class="admin-request-list">
-        @foreach (var request in requests)
+            <button class="admin-refresh" @onclick="LoadRequests">
+                Refresh
+            </button>
+        </header>
+
+        @if (!string.IsNullOrWhiteSpace(message))
         {
-            <article class="admin-request-card">
-                <div class="request-card-header">
-                    <div>
-                        <span class="status-pill @GetStatusClass(request.Status)">
-                            @request.Status
-                        </span>
+            <div class="admin-message">@message</div>
+        }
 
-                        <h2>@request.StoreName</h2>
-                        <p>@request.BusinessType</p>
-                    </div>
+        <section class="saas-stats">
+            <div>
+                <span>@requests.Count</span>
+                <p>Total Requests</p>
+            </div>
 
-                    <div class="package-badge">
-                        @request.PackageName
-                    </div>
+            <div>
+                <span>@requests.Count(x => x.Status == "Pending")</span>
+                <p>Pending</p>
+            </div>
+
+            <div>
+                <span>@requests.Count(x => x.Status == "In Progress")</span>
+                <p>In Progress</p>
+            </div>
+
+            <div>
+                <span>@requests.Count(x => x.Status == "Completed")</span>
+                <p>Completed</p>
+            </div>
+        </section>
+
+        <section class="saas-panel">
+
+            <div class="panel-header">
+                <h2>Requests</h2>
+
+                <div class="panel-tools">
+                    <input @bind="search" @bind:event="oninput" placeholder="Search customer, email, store..." />
+
+                    <select @bind="selectedStatus">
+                        <option value="">All statuses</option>
+
+                        @foreach (var status in statuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="request-table">
+
+                <div class="table-head">
+                    <span>Customer</span>
+                    <span>Store</span>
+                    <span>Package</span>
+                    <span>Status</span>
+                    <span>Date</span>
+                    <span>Action</span>
                 </div>
 
-                <div class="request-details-grid">
-                    <div class="detail-box">
-                        <span>Customer</span>
-                        <strong>@request.CustomerFullName</strong>
-                    </div>
-
-                    <div class="detail-box">
-                        <span>Email</span>
-                        <strong>@request.CustomerEmail</strong>
-                    </div>
-
-                    <div class="detail-box">
-                        <span>Phone</span>
-                        <strong>@request.CustomerPhoneNumber</strong>
-                    </div>
-
-                    <div class="detail-box">
-                        <span>Created</span>
-                        <strong>@request.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</strong>
-                    </div>
-                </div>
-
-                <div class="request-notes">
-                    <span>Notes</span>
-                    <p>@request.Notes</p>
-                </div>
-
-                @if (request.Answers.Any())
+                @foreach (var request in FilteredRequests)
                 {
-                    <div class="request-answers">
-                        <span>Customer answers</span>
+                    <div class="table-row">
+                        <div class="customer-cell">
+                            <div class="customer-avatar">
+                                @GetInitial(request.CustomerFullName)
+                            </div>
 
-                        <div class="answers-grid">
-                            @foreach (var answer in request.Answers)
-                            {
-                                <div class="answer-box">
-                                    <p>@answer.Question</p>
-                                    <strong>@answer.Answer</strong>
-                                </div>
-                            }
+                            <div>
+                                <strong>@request.CustomerFullName</strong>
+                                <p>@request.CustomerEmail</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <strong>@request.StoreName</strong>
+                            <p>@request.BusinessType</p>
+                        </div>
+
+                        <div>
+                            <span class="package-chip">@request.PackageName</span>
+                        </div>
+
+                        <div>
+                            <span class="status-pill @GetStatusClass(request.Status)">
+                                @request.Status
+                            </span>
+                        </div>
+
+                        <div>
+                            @request.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd")
+                        </div>
+
+                        <div>
+                            <button class="view-btn" @onclick="() => OpenDetails(request)">
+                                View
+                            </button>
                         </div>
                     </div>
                 }
 
-                <div class="status-update-row">
-                    <label>
-                        Change status
-                        <select @bind="request.SelectedStatus">
-                            @foreach (var status in statuses)
-                            {
-                                <option value="@status">@status</option>
-                            }
-                        </select>
-                    </label>
+            </div>
 
-                    <button @onclick="() => UpdateStatus(request)">
-                        Save status
+        </section>
+
+    </main>
+
+    @if (selectedRequest is not null)
+    {
+        <div class="details-backdrop" @onclick="CloseDetails"></div>
+
+        <aside class="details-drawer">
+
+            <div class="drawer-header">
+                <div>
+                    <p class="eyebrow">Request Details</p>
+                    <h2>@selectedRequest.StoreName</h2>
+                </div>
+
+                <button @onclick="CloseDetails">×</button>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Customer</h3>
+
+                <div class="drawer-grid">
+                    <div>
+                        <span>Name</span>
+                        <strong>@selectedRequest.CustomerFullName</strong>
+                    </div>
+
+                    <div>
+                        <span>Email</span>
+                        <strong>@selectedRequest.CustomerEmail</strong>
+                    </div>
+
+                    <div>
+                        <span>Phone</span>
+                        <strong>@selectedRequest.CustomerPhoneNumber</strong>
+                    </div>
+
+                    <div>
+                        <span>Package</span>
+                        <strong>@selectedRequest.PackageName</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Project</h3>
+
+                <div class="drawer-grid">
+                    <div>
+                        <span>Store</span>
+                        <strong>@selectedRequest.StoreName</strong>
+                    </div>
+
+                    <div>
+                        <span>Business</span>
+                        <strong>@selectedRequest.BusinessType</strong>
+                    </div>
+
+                    <div>
+                        <span>Created</span>
+                        <strong>@selectedRequest.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</strong>
+                    </div>
+
+                    <div>
+                        <span>Status</span>
+                        <strong>@selectedRequest.Status</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Notes</h3>
+                <p class="drawer-notes">@selectedRequest.Notes</p>
+            </div>
+
+            @if (selectedRequest.Answers.Any())
+            {
+                <div class="drawer-section">
+                    <h3>Client Answers</h3>
+
+                    <div class="drawer-answers">
+                        @foreach (var answer in selectedRequest.Answers)
+                        {
+                            <div>
+                                <span>@answer.Question</span>
+                                <strong>@answer.Answer</strong>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="drawer-section">
+                <h3>Update Status</h3>
+
+                <div class="drawer-status-row">
+                    <select @bind="selectedRequest.SelectedStatus">
+                        @foreach (var status in statuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+
+                    <button @onclick="() => UpdateStatus(selectedRequest)">
+                        Save
                     </button>
                 </div>
-            </article>
-        }
-    </section>
+            </div>
+
+        </aside>
+    }
+
 </div>
 
 @code {
     private string message = "";
+    private string search = "";
+    private string selectedStatus = "";
+
+    private StoreRequestViewModel? selectedRequest;
+
     private List<StoreRequestViewModel> requests = new();
 
     private readonly string[] statuses =
@@ -138,6 +268,16 @@
         "Completed",
         "Rejected"
     };
+
+    private IEnumerable<StoreRequestViewModel> FilteredRequests =>
+        requests.Where(x =>
+            (string.IsNullOrWhiteSpace(search)
+             || x.CustomerFullName.Contains(search, StringComparison.OrdinalIgnoreCase)
+             || x.CustomerEmail.Contains(search, StringComparison.OrdinalIgnoreCase)
+             || x.StoreName.Contains(search, StringComparison.OrdinalIgnoreCase))
+            &&
+            (string.IsNullOrWhiteSpace(selectedStatus)
+             || x.Status == selectedStatus));
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -160,12 +300,6 @@
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
 
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            message = "You must login as Admin or SuperAdmin first.";
-            return;
-        }
-
         using var httpRequest = new HttpRequestMessage(
             HttpMethod.Get,
             "https://localhost:7066/api/StoreRequests");
@@ -185,23 +319,27 @@
 
         requests = result ?? new();
 
-        foreach (var request in requests)
+        foreach (var item in requests)
         {
-            request.SelectedStatus = request.Status;
+            item.SelectedStatus = item.Status;
         }
 
         message = "";
     }
 
+    private void OpenDetails(StoreRequestViewModel request)
+    {
+        selectedRequest = request;
+    }
+
+    private void CloseDetails()
+    {
+        selectedRequest = null;
+    }
+
     private async Task UpdateStatus(StoreRequestViewModel request)
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
-
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            message = "You must login first.";
-            return;
-        }
 
         using var httpRequest = new HttpRequestMessage(
             HttpMethod.Put,
@@ -228,6 +366,13 @@
         }
     }
 
+    private string GetInitial(string value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "?"
+            : value.Substring(0, 1).ToUpper();
+    }
+
     private string GetStatusClass(string status)
     {
         return status switch
@@ -245,7 +390,6 @@
     public class StoreRequestViewModel
     {
         public int Id { get; set; }
-        public int UserAccountId { get; set; }
 
         public string CustomerFullName { get; set; } = "";
         public string CustomerEmail { get; set; } = "";
@@ -255,6 +399,7 @@
         public string BusinessType { get; set; } = "";
         public string PackageName { get; set; } = "";
         public string Notes { get; set; } = "";
+
         public string Status { get; set; } = "";
         public string SelectedStatus { get; set; } = "";
 
