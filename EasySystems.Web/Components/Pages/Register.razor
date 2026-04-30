@@ -34,8 +34,8 @@
             <input @bind="model.Email" placeholder="Email address" />
             <input @bind="model.PhoneNumber" placeholder="Phone number" />
 
-            <button class="auth-btn" @onclick="SubmitRegister">
-                Create account
+            <button class="auth-btn" @onclick="SubmitRegister" disabled="@isLoading">
+                @(isLoading ? "Creating account..." : "Create account")
             </button>
 
             @if (!string.IsNullOrWhiteSpace(message))
@@ -45,7 +45,7 @@
 
             <p class="auth-link">
                 Already have an account?
-                <a href="/login">Login</a>
+                <NavLink href="/login">Login</NavLink>
             </p>
 
         </div>
@@ -56,24 +56,41 @@
 
 @code {
     private string message = "";
+    private bool isLoading = false;
 
     private RegisterModel model = new();
 
     private async Task SubmitRegister()
     {
+        message = "";
+
+        if (string.IsNullOrWhiteSpace(model.FirstName) ||
+            string.IsNullOrWhiteSpace(model.LastName) ||
+            string.IsNullOrWhiteSpace(model.Email) ||
+            string.IsNullOrWhiteSpace(model.PhoneNumber))
+        {
+            message = "Please complete all fields.";
+            return;
+        }
+
+        isLoading = true;
+
         var response = await Http.PostAsJsonAsync(
             "https://localhost:7066/api/Auth/register",
             model);
 
+        isLoading = false;
+
         if (response.IsSuccessStatusCode)
         {
-            message = "Account created successfully.";
-            await Task.Delay(800);
+            message = "Account created successfully. You can login now.";
+
+            await Task.Delay(700);
             Nav.NavigateTo("/login");
         }
         else
         {
-            message = "Could not create account.";
+            message = await response.Content.ReadAsStringAsync();
         }
     }
 

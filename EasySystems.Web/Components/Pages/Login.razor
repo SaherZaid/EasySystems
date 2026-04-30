@@ -8,41 +8,39 @@
 <PageTitle>Login</PageTitle>
 
 <div class="auth-page">
-
     <section class="auth-card">
 
         <div class="auth-left">
             <p class="eyebrow">EasySystems</p>
             <h1>Secure login</h1>
             <p>
-                Access your dashboard using a one-time secure email token.
+                Access your dashboard using a one-time secure email code.
                 Fast, simple, and passwordless.
             </p>
 
             <ul>
                 <li>✓ Passwordless access</li>
-                <li>✓ Secure verification token</li>
+                <li>✓ Secure verification code</li>
                 <li>✓ Instant dashboard access</li>
                 <li>✓ Admin role support</li>
             </ul>
         </div>
 
         <div class="auth-right">
-
             <h2>Login</h2>
 
             @if (!codeSent)
             {
                 <input @bind="email" placeholder="Email address" />
 
-                <button class="auth-btn" @onclick="SendCode">
-                    Continue
+                <button class="auth-btn" @onclick="SendCode" disabled="@isLoading">
+                    @(isLoading ? "Sending..." : "Continue")
                 </button>
             }
             else
             {
                 <div class="success-badge">
-                    Token sent to: @email
+                    Code sent to: @email
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(devCode))
@@ -54,16 +52,18 @@
 
                 <input @bind="code" placeholder="Enter verification code" />
 
-                <button class="auth-btn" @onclick="LoginWithCode">
-                    Login now
+                <button class="auth-btn" @onclick="LoginWithCode" disabled="@isLoading">
+                    @(isLoading ? "Logging in..." : "Login now")
                 </button>
 
                 <button class="auth-btn-secondary"
                         @onclick="ResendCode"
                         disabled="@waitingResend">
-                    @(waitingResend
-                        ? $"Resend in {secondsLeft}s"
-                        : "Resend code")
+                    @(waitingResend ? $"Resend in {secondsLeft}s" : "Resend code")
+                </button>
+
+                <button class="auth-btn-secondary" @onclick="ChangeEmail">
+                    Change email
                 </button>
             }
 
@@ -74,13 +74,11 @@
 
             <p class="auth-link">
                 No account?
-                <a href="/register">Create account</a>
+                <NavLink href="/register">Create account</NavLink>
             </p>
-
         </div>
 
     </section>
-
 </div>
 
 @code {
@@ -91,32 +89,38 @@
 
     private bool codeSent;
     private bool waitingResend;
+    private bool isLoading;
     private int secondsLeft = 30;
 
     private async Task SendCode()
     {
+        message = "";
+
         if (string.IsNullOrWhiteSpace(email))
         {
             message = "Please enter your email.";
             return;
         }
 
+        isLoading = true;
+
         var response = await Http.PostAsJsonAsync(
             "https://localhost:7066/api/Auth/send-code",
             email);
 
+        isLoading = false;
+
         if (response.IsSuccessStatusCode)
         {
-            var result =
-                await response.Content.ReadFromJsonAsync<SendCodeResponse>();
+            var result = await response.Content.ReadFromJsonAsync<SendCodeResponse>();
 
             devCode = result?.Code ?? "";
             code = devCode;
 
             codeSent = true;
-            message = "Verification code was sent to your mail.";
+            message = "Verification code was sent to your email.";
 
-            await StartResendTimer();
+            _ = StartResendTimer();
         }
         else
         {
@@ -126,6 +130,18 @@
 
     private async Task LoginWithCode()
     {
+        message = "";
+
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            message = "Please enter the verification code.";
+            return;
+        }
+
+        isLoading = true;
+
+        await ClearStoredUser();
+
         var response = await Http.PostAsJsonAsync(
             "https://localhost:7066/api/Auth/verify-code",
             new
@@ -134,34 +150,49 @@
                 Code = code
             });
 
+        isLoading = false;
+
         if (response.IsSuccessStatusCode)
         {
-            var result =
-                await response.Content.ReadFromJsonAsync<LoginResponse>();
+            var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
             if (result is not null)
             {
-                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result.Token);
-                await JS.InvokeVoidAsync("localStorage.setItem", "userRole", result.Role);
-                await JS.InvokeVoidAsync("localStorage.setItem", "userEmail", result.Email);
+                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", result.Token ?? "");
+                await JS.InvokeVoidAsync("localStorage.setItem", "userRole", result.Role ?? "User");
+                await JS.InvokeVoidAsync("localStorage.setItem", "userEmail", result.Email ?? "");
 
-                Auth.SetUser(true, result.Role);
+                if (!string.IsNullOrWhiteSpace(result.FirstName))
+                    await JS.InvokeVoidAsync("localStorage.setItem", "firstName", result.FirstName);
+
+                if (!string.IsNullOrWhiteSpace(result.LastName))
+                    await JS.InvokeVoidAsync("localStorage.setItem", "lastName", result.LastName);
+
+                Auth.SetUser(true, result.Role ?? "User");
             }
 
             message = "Login successful.";
 
-            await Task.Delay(500);
+            await Task.Delay(400);
             Nav.NavigateTo("/dashboard");
         }
         else
         {
-            message = "Invalid or expired token.";
+            message = await response.Content.ReadAsStringAsync();
         }
     }
 
     private async Task ResendCode()
     {
         await SendCode();
+    }
+
+    private void ChangeEmail()
+    {
+        codeSent = false;
+        code = "";
+        devCode = "";
+        message = "";
     }
 
     private async Task StartResendTimer()
@@ -173,15 +204,27 @@
         {
             await Task.Delay(1000);
             secondsLeft--;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
 
         waitingResend = false;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ClearStoredUser()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userRole");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userEmail");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "firstName");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "lastName");
+
+        Auth.Logout();
     }
 
     public class SendCodeResponse
     {
+        public string Message { get; set; } = "";
         public string Code { get; set; } = "";
     }
 
@@ -190,5 +233,7 @@
         public string Email { get; set; } = "";
         public string Role { get; set; } = "";
         public string Token { get; set; } = "";
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
     }
 }

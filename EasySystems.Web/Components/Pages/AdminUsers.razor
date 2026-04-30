@@ -4,18 +4,22 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
-<PageTitle>Manage Users | EasySystems</PageTitle>
+<PageTitle>Manage Users</PageTitle>
 
 <div class="admin-users-page">
 
     <section class="admin-users-hero">
+
         <div>
             <p class="eyebrow">Super Admin</p>
             <h1>Manage Users</h1>
-            <p>Control user roles and permissions across EasySystems.</p>
+            <p>Update user roles and permissions.</p>
         </div>
 
-        <button class="admin-refresh" @onclick="LoadUsers">Refresh</button>
+        <button class="admin-refresh" @onclick="LoadUsers">
+            Refresh
+        </button>
+
     </section>
 
     @if (!string.IsNullOrWhiteSpace(message))
@@ -24,49 +28,69 @@
     }
 
     <section class="users-panel">
-        @foreach (var user in users)
+
+        @if (isLoading)
         {
-            <article class="user-role-card">
-                <div class="user-role-left">
-                    <div class="customer-avatar">
-                        @GetInitial(user.FullName)
-                    </div>
-
-                    <div>
-                        <h3>@user.FullName</h3>
-                        <p>@user.Email</p>
-                        <span class="verified-text">
-                            @(user.IsEmailVerified ? "Verified" : "Not verified")
-                        </span>
-                    </div>
-                </div>
-
-                <div class="user-role-actions">
-                    <select @bind="user.SelectedRole">
-                        <option>User</option>
-                        <option>Admin</option>
-                        <option>SuperAdmin</option>
-                    </select>
-
-                    <button @onclick="() => UpdateRole(user)">
-                        Save Role
-                    </button>
-                </div>
-            </article>
+            <div class="admin-message">Loading users...</div>
         }
+        else
+        {
+            @foreach (var user in users)
+            {
+                <article class="user-role-card">
+
+                    <div class="user-role-left">
+
+                        <div class="customer-avatar">
+                            @GetInitial(user.FullName)
+                        </div>
+
+                        <div>
+                            <h3>@user.FullName</h3>
+                            <p>@user.Email</p>
+
+                            <span class="verified-text">
+                                @(user.IsEmailVerified ? "Verified" : "Not Verified")
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="user-role-actions">
+
+                        <select @bind="user.SelectedRole">
+                            <option>User</option>
+                            <option>Admin</option>
+                            <option>SuperAdmin</option>
+                        </select>
+
+                        <button @onclick="() => UpdateRole(user)">
+                            Save
+                        </button>
+
+                    </div>
+
+                </article>
+            }
+        }
+
     </section>
 
 </div>
 
 @code {
+
     private string message = "";
+    private bool isLoading = true;
+
     private List<UserViewModel> users = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+            var role =
+                await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
 
             if (role != "SuperAdmin")
             {
@@ -81,69 +105,75 @@
 
     private async Task LoadUsers()
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+        isLoading = true;
 
-        using var request = new HttpRequestMessage(
+        var token =
+            await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var req = new HttpRequestMessage(
             HttpMethod.Get,
             "https://localhost:7066/api/Auth/users");
 
-        request.Headers.Authorization =
+        req.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        var response = await Http.SendAsync(request);
+        var response = await Http.SendAsync(req);
 
-        if (!response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
         {
-            message = $"Could not load users. Status: {(int)response.StatusCode}";
-            return;
+            var result =
+                await response.Content.ReadFromJsonAsync<List<UserViewModel>>();
+
+            users = result ?? new();
+
+            foreach (var user in users)
+                user.SelectedRole = user.Role;
+
+            message = "";
+        }
+        else
+        {
+            message = "Could not load users.";
         }
 
-        var result = await response.Content.ReadFromJsonAsync<List<UserViewModel>>();
-
-        users = result ?? new();
-
-        foreach (var user in users)
-        {
-            user.SelectedRole = user.Role;
-        }
-
-        message = "";
+        isLoading = false;
     }
 
     private async Task UpdateRole(UserViewModel user)
     {
-        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+        var token =
+            await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
 
-        using var request = new HttpRequestMessage(
+        using var req = new HttpRequestMessage(
             HttpMethod.Post,
             "https://localhost:7066/api/Auth/update-role");
 
-        request.Headers.Authorization =
+        req.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-        request.Content = JsonContent.Create(new
+        req.Content = JsonContent.Create(new
         {
             email = user.Email,
             role = user.SelectedRole
         });
 
-        var response = await Http.SendAsync(request);
+        var response = await Http.SendAsync(req);
 
         if (response.IsSuccessStatusCode)
         {
             user.Role = user.SelectedRole;
-            message = $"Role updated for {user.Email}.";
+            message = "Role updated successfully.";
         }
         else
         {
-            message = $"Could not update role. Status: {(int)response.StatusCode}";
+            message = "Failed to update role.";
         }
     }
 
     private string GetInitial(string value)
     {
         return string.IsNullOrWhiteSpace(value)
-            ? "?"
+            ? "U"
             : value.Substring(0, 1).ToUpper();
     }
 

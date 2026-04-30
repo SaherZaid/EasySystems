@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 <PageTitle>Profile</PageTitle>
 
@@ -16,7 +17,7 @@
 
             <div>
                 <p class="eyebrow">My Account</p>
-                <h1>@($"{model.FirstName} {model.LastName}")</h1>
+                <h1>@FullName</h1>
                 <p>@model.Email</p>
             </div>
         </div>
@@ -26,43 +27,50 @@
             <div class="admin-message">@message</div>
         }
 
-        <div class="profile-grid">
+        @if (isLoading)
+        {
+            <div class="admin-message">Loading profile...</div>
+        }
+        else
+        {
+            <div class="profile-grid">
 
-            <div class="profile-box">
-                <span>First Name</span>
-                <input @bind="model.FirstName" />
+                <div class="profile-box">
+                    <span>First Name</span>
+                    <input @bind="model.FirstName" />
+                </div>
+
+                <div class="profile-box">
+                    <span>Last Name</span>
+                    <input @bind="model.LastName" />
+                </div>
+
+                <div class="profile-box">
+                    <span>Email</span>
+                    <input @bind="model.Email" />
+                </div>
+
+                <div class="profile-box">
+                    <span>Phone</span>
+                    <input @bind="model.PhoneNumber" />
+                </div>
+
+                <div class="profile-box">
+                    <span>Role</span>
+                    <strong>@model.Role</strong>
+                </div>
+
+                <div class="profile-box">
+                    <span>Status</span>
+                    <strong>Active</strong>
+                </div>
+
             </div>
 
-            <div class="profile-box">
-                <span>Last Name</span>
-                <input @bind="model.LastName" />
-            </div>
-
-            <div class="profile-box">
-                <span>Email</span>
-                <input @bind="model.Email" />
-            </div>
-
-            <div class="profile-box">
-                <span>Phone</span>
-                <input @bind="model.PhoneNumber" />
-            </div>
-
-            <div class="profile-box">
-                <span>Role</span>
-                <strong>@model.Role</strong>
-            </div>
-
-            <div class="profile-box">
-                <span>Status</span>
-                <strong>Active</strong>
-            </div>
-
-        </div>
-
-        <button class="auth-btn" @onclick="SaveProfile">
-            Save Changes
-        </button>
+            <button class="auth-btn" @onclick="SaveProfile" disabled="@isSaving">
+                @(isSaving ? "Saving..." : "Save Changes")
+            </button>
+        }
 
     </section>
 
@@ -70,8 +78,15 @@
 
 @code {
     private string message = "";
+    private bool isLoading = true;
+    private bool isSaving = false;
 
     private ProfileModel model = new();
+
+    private string FullName =>
+        string.IsNullOrWhiteSpace($"{model.FirstName} {model.LastName}".Trim())
+            ? "User Account"
+            : $"{model.FirstName} {model.LastName}".Trim();
 
     private string FirstLetter =>
         string.IsNullOrWhiteSpace(model.FirstName)
@@ -91,6 +106,12 @@
     {
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
 
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
             "https://localhost:7066/api/Profile/me");
@@ -103,6 +124,7 @@
         if (!response.IsSuccessStatusCode)
         {
             message = "Could not load profile.";
+            isLoading = false;
             return;
         }
 
@@ -110,10 +132,15 @@
 
         if (result is not null)
             model = result;
+
+        isLoading = false;
     }
 
     private async Task SaveProfile()
     {
+        message = "";
+        isSaving = true;
+
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
 
         using var request = new HttpRequestMessage(
@@ -133,9 +160,14 @@
 
         var response = await Http.SendAsync(request);
 
+        isSaving = false;
+
         if (response.IsSuccessStatusCode)
         {
             await JS.InvokeVoidAsync("localStorage.setItem", "userEmail", model.Email);
+            await JS.InvokeVoidAsync("localStorage.setItem", "firstName", model.FirstName);
+            await JS.InvokeVoidAsync("localStorage.setItem", "lastName", model.LastName);
+
             message = "Profile updated successfully.";
         }
         else

@@ -1,32 +1,29 @@
 ﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Routing
 
 <header class="site-header">
 
-    <a href="/" class="brand">
+    <NavLink href="/" class="brand" Match="NavLinkMatch.All">
         <span class="brand-icon">E</span>
         <span>EasySystems</span>
-    </a>
+    </NavLink>
 
     <nav class="main-nav">
-
-        <a href="/">Home</a>
-        <a href="/create-store">Create Store</a>
-        <a href="/pricing">Pricing</a>
-        <a href="/about">About</a>
-        <a href="/faq">FAQ</a>
-        <a href="/contact">Contact</a>
+        <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
+        <NavLink href="/create-store">Create Store</NavLink>
+        <NavLink href="/pricing">Pricing</NavLink>
+        <NavLink href="/about">About</NavLink>
+        <NavLink href="/faq">FAQ</NavLink>
+        <NavLink href="/contact">Contact</NavLink>
         
-
     </nav>
 
     <div class="header-actions">
-
         <HeaderAuth />
 
-        <a href="/create-store" class="header-cta">
+        <NavLink href="/create-store" class="header-cta">
             Start Now
-        </a>
-
+        </NavLink>
     </div>
 
 </header>
