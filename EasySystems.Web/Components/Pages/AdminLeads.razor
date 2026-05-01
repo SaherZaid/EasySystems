@@ -1,0 +1,348 @@
+﻿@page "/admin/leads"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<PageTitle>Leads Inbox | EasySystems</PageTitle>
+
+<div class="admin-saas">
+
+    <aside class="admin-sidebar">
+        <div class="admin-logo">
+            <span>E</span>
+            <strong>EasySystems</strong>
+        </div>
+
+        <nav>
+            <NavLink href="/admin/requests">Requests CRM</NavLink>
+            <NavLink href="/admin/leads" class="active">Leads Inbox</NavLink>
+            <NavLink href="/admin/users">Users & Roles</NavLink>
+            <a>Analytics</a>
+            <a>Settings</a>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+
+        <header class="admin-topbar">
+            <div>
+                <p class="eyebrow">CRM Inbox</p>
+                <h1>Leads Inbox</h1>
+                <p class="panel-subtitle">Manage contact messages from website visitors.</p>
+            </div>
+
+            <button class="admin-refresh" @onclick="LoadLeads">
+                Refresh
+            </button>
+        </header>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="admin-message">@message</div>
+        }
+
+        <section class="saas-stats">
+            <div><span>@leads.Count</span><p>Total Leads</p></div>
+            <div><span>@leads.Count(x => !x.IsRead)</span><p>Unread</p></div>
+            <div><span>@leads.Count(x => x.IsRead)</span><p>Read</p></div>
+            <div><span>@leads.Count(x => x.CreatedAtUtc.Date == DateTime.UtcNow.Date)</span><p>Today</p></div>
+        </section>
+
+        <section class="saas-panel">
+
+            <div class="panel-header">
+                <div>
+                    <h2>Contact Leads</h2>
+                    <p class="panel-subtitle">Search, open, reply, and mark leads as read.</p>
+                </div>
+
+                <div class="panel-tools">
+                    <input @bind="search"
+                           @bind:event="oninput"
+                           placeholder="Search name, email, subject..." />
+
+                    <select @bind="selectedFilter">
+                        <option value="">All leads</option>
+                        <option value="Unread">Unread</option>
+                        <option value="Read">Read</option>
+                    </select>
+
+                    <select @bind="selectedSort">
+                        <option value="Newest">Newest</option>
+                        <option value="Oldest">Oldest</option>
+                        <option value="Unread">Unread first</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="leads-list">
+
+                @if (isLoading)
+                {
+                    <div class="admin-message">Loading leads...</div>
+                }
+                else if (!FilteredLeads.Any())
+                {
+                    <div class="admin-message">No leads found.</div>
+                }
+                else
+                {
+                    @foreach (var lead in FilteredLeads)
+                    {
+                        <article class="lead-card @(lead.IsRead ? "" : "lead-unread")">
+
+                            <div class="lead-avatar">
+                                @GetInitial(lead.Name)
+                            </div>
+
+                            <div class="lead-main">
+                                <div class="lead-title-row">
+                                    <div>
+                                        <h3>@lead.Name</h3>
+                                        <p>@lead.Email</p>
+                                    </div>
+
+                                    <span class="status-pill @(lead.IsRead ? "status-completed" : "status-pending")">
+                                        @(lead.IsRead ? "Read" : "New")
+                                    </span>
+                                </div>
+
+                                <div class="lead-meta">
+                                    <span>@lead.Subject</span>
+                                    <span>@lead.Business</span>
+                                    <span>@lead.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                                </div>
+
+                                <p class="lead-preview">
+                                    @lead.Message
+                                </p>
+                            </div>
+
+                            <div class="lead-actions">
+                                <a href="mailto:@lead.Email">Reply</a>
+                                <button @onclick="() => OpenLead(lead)">Open</button>
+                            </div>
+
+                        </article>
+                    }
+                }
+
+            </div>
+
+        </section>
+
+    </main>
+
+    @if (selectedLead is not null)
+    {
+        <div class="details-backdrop" @onclick="CloseLead"></div>
+
+        <aside class="details-drawer">
+
+            <div class="drawer-header">
+                <div>
+                    <p class="eyebrow">Lead Details</p>
+                    <h2>@selectedLead.Name</h2>
+                </div>
+
+                <button @onclick="CloseLead">×</button>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Contact</h3>
+
+                <div class="drawer-grid">
+                    <div><span>Name</span><strong>@selectedLead.Name</strong></div>
+                    <div><span>Email</span><strong>@selectedLead.Email</strong></div>
+                    <div><span>Phone</span><strong>@selectedLead.Phone</strong></div>
+                    <div><span>Business</span><strong>@selectedLead.Business</strong></div>
+                </div>
+
+                <div class="crm-contact-actions">
+                    <a href="mailto:@selectedLead.Email">Reply by Email</a>
+                    <a href="tel:@selectedLead.Phone">Call</a>
+                </div>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Subject</h3>
+                <p class="drawer-notes">@selectedLead.Subject</p>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Message</h3>
+                <p class="drawer-notes">@selectedLead.Message</p>
+            </div>
+
+            <div class="drawer-section">
+                <h3>Lead Status</h3>
+
+                <div class="drawer-status-row">
+                    <span class="status-pill @(selectedLead.IsRead ? "status-completed" : "status-pending")">
+                        @(selectedLead.IsRead ? "Read" : "New")
+                    </span>
+
+                    @if (!selectedLead.IsRead)
+                    {
+                        <button @onclick="MarkRead">
+                            Mark as Read
+                        </button>
+                    }
+                </div>
+            </div>
+
+        </aside>
+    }
+
+</div>
+
+@code {
+    private string message = "";
+    private string search = "";
+    private string selectedFilter = "";
+    private string selectedSort = "Newest";
+    private bool isLoading = true;
+
+    private List<LeadModel> leads = new();
+    private LeadModel? selectedLead;
+
+    private IEnumerable<LeadModel> FilteredLeads
+    {
+        get
+        {
+            var query = leads.Where(x =>
+                string.IsNullOrWhiteSpace(search)
+                || x.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || x.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || x.Subject.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || x.Business.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+            query = selectedFilter switch
+            {
+                "Unread" => query.Where(x => !x.IsRead),
+                "Read" => query.Where(x => x.IsRead),
+                _ => query
+            };
+
+            return selectedSort switch
+            {
+                "Oldest" => query.OrderBy(x => x.CreatedAtUtc),
+                "Unread" => query.OrderBy(x => x.IsRead).ThenByDescending(x => x.CreatedAtUtc),
+                _ => query.OrderByDescending(x => x.CreatedAtUtc)
+            };
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+
+            if (role != "Admin" && role != "SuperAdmin")
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            await LoadLeads();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadLeads()
+    {
+        isLoading = true;
+
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://localhost:7066/api/Contact/admin");
+
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            message = $"Could not load leads. Status: {(int)response.StatusCode}";
+            isLoading = false;
+            return;
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<List<LeadModel>>();
+
+        leads = result ?? new();
+
+        message = "";
+        isLoading = false;
+    }
+
+    private void OpenLead(LeadModel lead)
+    {
+        selectedLead = lead;
+    }
+
+    private void CloseLead()
+    {
+        selectedLead = null;
+    }
+
+    private async Task MarkRead()
+    {
+        if (selectedLead is null)
+            return;
+
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            $"https://localhost:7066/api/Contact/{selectedLead.Id}/read");
+
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            selectedLead.IsRead = true;
+
+            var lead = leads.FirstOrDefault(x => x.Id == selectedLead.Id);
+            if (lead is not null)
+                lead.IsRead = true;
+
+            message = "Lead marked as read.";
+        }
+        else
+        {
+            message = "Could not update lead.";
+        }
+    }
+
+    private string GetInitial(string value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "?"
+            : value.Substring(0, 1).ToUpper();
+    }
+
+    public class LeadModel
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Business { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Message { get; set; } = "";
+
+        public bool IsRead { get; set; }
+
+        public DateTime CreatedAtUtc { get; set; }
+    }
+}

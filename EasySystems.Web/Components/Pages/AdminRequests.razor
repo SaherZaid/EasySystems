@@ -75,6 +75,38 @@
 
         </section>
 
+        <section class="chart-panel">
+
+            <div class="panel-header">
+                <div>
+                    <h2>Revenue Analytics</h2>
+                    <p class="panel-subtitle">Completed projects income by month</p>
+                </div>
+            </div>
+
+            <div class="revenue-chart">
+
+                @foreach (var item in MonthlyChartData)
+                {
+                    <div class="chart-col">
+
+                        <div class="chart-bar-wrap">
+                            <div class="chart-bar"
+                                 style="height:@item.Height%">
+                            </div>
+                        </div>
+
+                        <strong>@item.Month</strong>
+                        <span>@item.Amount.ToString("N0")</span>
+
+                    </div>
+                }
+
+            </div>
+
+        </section>
+
+
         <section class="saas-panel">
 
             <div class="panel-header">
@@ -169,9 +201,17 @@
                             </div>
 
                             <div class="row-actions">
-                                <button class="view-btn" @onclick="() => OpenDetails(request)">
+
+                                <button class="view-btn"
+                                        @onclick="() => OpenDetails(request)">
                                     View
                                 </button>
+
+                                <button class="invoice-btn"
+                                        @onclick="() => DownloadInvoice(request.Id)">
+                                    Invoice
+                                </button>
+
                             </div>
                         </div>
                     }
@@ -311,6 +351,54 @@
 
     private StoreRequestViewModel? selectedRequest;
     private List<StoreRequestViewModel> requests = new();
+
+    private List<ChartItem> MonthlyChartData =>
+    BuildChart();
+
+    private List<ChartItem> BuildChart()
+    {
+        var months = new[]
+        {
+        "Jan","Feb","Mar","Apr","May","Jun",
+        "Jul","Aug","Sep","Oct","Nov","Dec"
+    };
+
+        var data = new List<ChartItem>();
+
+        for (int i = 1; i <= 12; i++)
+        {
+            var amount = requests
+                .Where(x =>
+                    x.Status == "Completed" &&
+                    x.CreatedAtUtc.Year == DateTime.UtcNow.Year &&
+                    x.CreatedAtUtc.Month == i)
+                .Sum(x => GetPackagePrice(x.PackageName));
+
+            data.Add(new ChartItem
+                {
+                    Month = months[i - 1],
+                    Amount = amount
+                });
+        }
+
+        var max = data.Max(x => x.Amount);
+
+        foreach (var item in data)
+        {
+            item.Height = max == 0
+                ? 8
+                : Math.Max(8, (item.Amount / max) * 100);
+        }
+
+        return data;
+    }
+
+    public class ChartItem
+    {
+        public string Month { get; set; } = "";
+        public decimal Amount { get; set; }
+        public decimal Height { get; set; }
+    }
 
 
     private int PendingCount =>
@@ -488,6 +576,40 @@
             message = $"Could not update status. Status: {(int)response.StatusCode}";
         }
     }
+
+    async Task DownloadInvoice(int requestId)
+    {
+        var token = await JS.InvokeAsync<string>(
+            "localStorage.getItem",
+            "authToken");
+
+        using var req = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"https://localhost:7066/api/Invoices/request/{requestId}");
+
+        req.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue(
+                "Bearer",
+                token);
+
+        var response = await Http.SendAsync(req);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            message = "Could not generate invoice.";
+            return;
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+
+        var base64 = Convert.ToBase64String(bytes);
+
+        await JS.InvokeVoidAsync(
+            "downloadFileFromBytes",
+            $"invoice-{requestId}.pdf",
+            base64);
+    }
+
 
     private string GetInitial(string value)
     {

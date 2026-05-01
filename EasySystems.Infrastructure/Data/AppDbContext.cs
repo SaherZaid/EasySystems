@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<StoreQuestionAnswer> StoreQuestionAnswers => Set<StoreQuestionAnswer>();
 
     public DbSet<PackagePlan> PackagePlans => Set<PackagePlan>();
+    public DbSet<ContactLead> ContactLeads => Set<ContactLead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

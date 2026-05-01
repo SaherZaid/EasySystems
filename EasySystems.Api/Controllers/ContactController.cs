@@ -1,5 +1,9 @@
 ﻿using EasySystems.Api.Services;
+using EasySystems.Domain.Entities;
+using EasySystems.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace EasySystems.Api.Controllers;
 
@@ -8,10 +12,14 @@ namespace EasySystems.Api.Controllers;
 public class ContactController : ControllerBase
 {
     private readonly EmailService _emailService;
+    private readonly AppDbContext _db;
 
-    public ContactController(EmailService emailService)
+    public ContactController(
+        EmailService emailService,
+        AppDbContext db)
     {
         _emailService = emailService;
+        _db = db;
     }
 
     [HttpPost]
@@ -25,27 +33,74 @@ public class ContactController : ControllerBase
             return BadRequest("Missing required fields.");
         }
 
+        var lead = new ContactLead
+        {
+            Name = request.Name,
+            Email = request.Email,
+            Phone = request.Phone,
+            Business = request.Business,
+            Subject = request.Subject,
+            Message = request.Message,
+            IsRead = false
+        };
+
+        _db.ContactLeads.Add(lead);
+        await _db.SaveChangesAsync();
+
         var html = $@"
-        <h2>New Contact Message</h2>
+        <div style='font-family:Arial;padding:20px'>
+            <h2 style='margin-bottom:20px;'>🔥 New Contact Lead</h2>
 
-        <p><strong>Name:</strong> {request.Name}</p>
-        <p><strong>Email:</strong> {request.Email}</p>
-        <p><strong>Phone:</strong> {request.Phone}</p>
-        <p><strong>Business:</strong> {request.Business}</p>
-        <p><strong>Subject:</strong> {request.Subject}</p>
+            <p><strong>Name:</strong> {request.Name}</p>
+            <p><strong>Email:</strong> {request.Email}</p>
+            <p><strong>Phone:</strong> {request.Phone}</p>
+            <p><strong>Business:</strong> {request.Business}</p>
+            <p><strong>Subject:</strong> {request.Subject}</p>
 
-        <hr/>
+            <hr style='margin:20px 0;' />
 
-        <p>{request.Message}</p>";
+            <p>{request.Message}</p>
+        </div>";
 
         await _emailService.SendCustomEmail(
             "rentconnectab@gmail.com",
-            "New Contact Message",
+            "🔥 New Contact Lead",
             html);
 
         return Ok(new
         {
             message = "Message sent successfully."
+        });
+    }
+
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [HttpGet("admin")]
+    public async Task<IActionResult> GetAll()
+    {
+        var leads = await _db.ContactLeads
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .ToListAsync();
+
+        return Ok(leads);
+    }
+
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [HttpPut("{id:int}/read")]
+    public async Task<IActionResult> MarkRead(int id)
+    {
+        var lead = await _db.ContactLeads
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (lead is null)
+            return NotFound();
+
+        lead.IsRead = true;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Lead marked as read."
         });
     }
 

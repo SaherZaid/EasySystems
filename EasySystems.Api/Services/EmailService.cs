@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using EasySystems.Domain.Entities;
+using System.Net;
 using System.Net.Mail;
 
 namespace EasySystems.Api.Services;
@@ -11,7 +12,29 @@ public class EmailService
     {
         _configuration = configuration;
     }
+    public async Task SendAdminLeadEmail(ContactLead lead)
+    {
+        var html = BuildEmailHtml(
+            title: "New Contact Lead",
+            subtitle: "CRM Lead Notification",
+            body: $@"
+            <p>A new contact lead has been submitted from the website.</p>
 
+            <div class='info-box'>
+                <p><strong>Name:</strong> {lead.Name}</p>
+                <p><strong>Email:</strong> {lead.Email}</p>
+                <p><strong>Phone:</strong> {lead.Phone}</p>
+                <p><strong>Business:</strong> {lead.Business}</p>
+                <p><strong>Subject:</strong> {lead.Subject}</p>
+                <p><strong>Message:</strong> {lead.Message}</p>
+            </div>"
+        );
+
+        await SendEmail(
+            "rentconnectab@gmail.com",
+            "New EasySystems contact lead",
+            html);
+    }
     public async Task SendCustomEmail(string toEmail, string subject, string htmlBody)
     {
         var html = BuildEmailHtml(
