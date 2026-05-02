@@ -16,6 +16,7 @@
     <nav class="main-nav @(menuOpen ? "show-mobile-nav" : "")">
         <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">Home</NavLink>
         <NavLink href="/create-store" @onclick="CloseMenu">Create Store</NavLink>
+        <NavLink href="/dashboard" @onclick="CloseMenu">My Projects</NavLink>
         <NavLink href="/pricing" @onclick="CloseMenu">Pricing</NavLink>
         <NavLink href="/about" @onclick="CloseMenu">About</NavLink>
         <NavLink href="/faq" @onclick="CloseMenu">FAQ</NavLink>
@@ -39,6 +40,7 @@
         <div class="mobile-links">
             <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">Home</NavLink>
             <NavLink href="/create-store" @onclick="CloseMenu">Create Store</NavLink>
+            <NavLink href="/dashboard" @onclick="CloseMenu">My Projects</NavLink>
             <NavLink href="/pricing" @onclick="CloseMenu">Pricing</NavLink>
             <NavLink href="/about" @onclick="CloseMenu">About</NavLink>
             <NavLink href="/faq" @onclick="CloseMenu">FAQ</NavLink>
