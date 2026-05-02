@@ -3487,7 +3487,7 @@ h1:focus {
 }
 
 .login-link {
-    color: #0f172a;
+    color: color:#000000;
     font-weight: 700;
     text-decoration: none;
     padding: .7rem 1rem;
