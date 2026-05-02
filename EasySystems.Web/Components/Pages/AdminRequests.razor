@@ -1,5 +1,6 @@
 ﻿@page "/admin/requests"
 @rendermode InteractiveServer
+@using System.Net.Http.Headers
 @inject HttpClient Http
 @inject IJSRuntime JS
 @inject NavigationManager Nav
@@ -229,6 +230,13 @@
 
         <aside class="details-drawer">
 
+            @if (!string.IsNullOrWhiteSpace(drawerMessage))
+            {
+                <div class="drawer-success">
+                    @drawerMessage
+                </div>
+            }
+
             <div class="drawer-header">
                 <div>
                     <p class="eyebrow">CRM Details</p>
@@ -271,17 +279,54 @@
                 <div class="drawer-grid">
                     <div>
                         <span>Priority</span>
+
                         <select class="drawer-input" @bind="selectedRequest.Priority">
                             <option>Low</option>
                             <option>Medium</option>
                             <option>High</option>
                             <option>Hot Lead</option>
                         </select>
+
+                        <div class="save-row">
+                            <button class="drawer-save-note"
+                                    @onclick="SavePriority">
+                                Save Priority
+                            </button>
+
+                            @if (prioritySaved)
+                            {
+                                <span class="mini-success">Saved ✔</span>
+                            }
+                        </div>
                     </div>
 
                     <div>
                         <span>Assigned To</span>
-                        <input class="drawer-input" @bind="selectedRequest.AssignedTo" placeholder="Admin name" />
+                        <select class="drawer-input"
+                                @bind="selectedRequest.AssignedTo">
+
+                            <option value="">Select user</option>
+
+                            @foreach (var admin in admins)
+                            {
+                                <option value="@admin.Email">
+                                    @admin.FullName (@admin.Role)
+                                </option>
+                            }
+
+                        </select>
+
+                        <div class="save-row">
+                            <button class="drawer-save-note"
+                                    @onclick="AssignTask">
+                                Assign
+                            </button>
+
+                            @if (assignSaved)
+                            {
+                                <span class="mini-success">Assigned ✔</span>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -298,9 +343,16 @@
                           @bind="selectedRequest.InternalNote"
                           placeholder="Write internal admin notes here..."></textarea>
 
-                <button class="drawer-save-note" @onclick="SaveInternalNote">
-                    Save Note
-                </button>
+                <div class="save-row">
+                    <button class="drawer-save-note" @onclick="SaveInternalNote">
+                        Save Note
+                    </button>
+
+                    @if (noteSaved)
+                    {
+                        <span class="mini-success">Saved ✔</span>
+                    }
+                </div>
             </div>
 
             @if (selectedRequest.Answers.Any())
@@ -331,9 +383,16 @@
                         }
                     </select>
 
-                    <button @onclick="() => UpdateStatus(selectedRequest)">
-                        Save Status
-                    </button>
+                    <div class="save-row">
+                        <button @onclick="() => UpdateStatus(selectedRequest)">
+                            Save Status
+                        </button>
+
+                        @if (statusSaved)
+                        {
+                            <span class="mini-success">Updated ✔</span>
+                        }
+                    </div>
                 </div>
             </div>
 
@@ -344,13 +403,28 @@
 
 @code {
     private string message = "";
+    private string drawerMessage = "";
     private string search = "";
     private string selectedStatus = "";
     private string selectedSort = "Newest";
     private bool isLoading = true;
 
+    bool prioritySaved = false;
+    bool assignSaved = false;
+    bool noteSaved = false;
+    bool statusSaved = false;
+
     private StoreRequestViewModel? selectedRequest;
     private List<StoreRequestViewModel> requests = new();
+
+    private List<AdminUserVm> admins = new();
+
+    public class AdminUserVm
+    {
+        public string FullName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
 
     private List<ChartItem> MonthlyChartData =>
     BuildChart();
@@ -490,9 +564,68 @@
                 return;
             }
 
+            await LoadAdmins();
             await LoadRequests();
             StateHasChanged();
         }
+    }
+
+    private async Task SavePriority()
+    {
+        if (selectedRequest is null) return;
+
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var req = new HttpRequestMessage(
+            HttpMethod.Put,
+            $"https://localhost:7066/api/StoreRequests/{selectedRequest.Id}/crm");
+
+        req.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        req.Content = JsonContent.Create(new
+        {
+            priority = selectedRequest.Priority,
+            assignedTo = selectedRequest.AssignedTo,
+            internalNote = selectedRequest.InternalNote
+        });
+
+        var response = await Http.SendAsync(req);
+
+        if (response.IsSuccessStatusCode)
+        {
+            prioritySaved = true;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+
+            prioritySaved = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAdmins()
+    {
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var req = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://localhost:7066/api/Auth/users");
+
+        req.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(req);
+
+        if (!response.IsSuccessStatusCode)
+            return;
+
+        var users =
+            await response.Content.ReadFromJsonAsync<List<AdminUserVm>>();
+
+        admins = users?
+            .Where(x => x.Role == "Admin" || x.Role == "SuperAdmin")
+            .ToList() ?? new();
     }
 
     private async Task LoadRequests()
@@ -536,6 +669,7 @@
     private void OpenDetails(StoreRequestViewModel request)
     {
         selectedRequest = request;
+        drawerMessage = "";
     }
 
     private void CloseDetails()
@@ -543,13 +677,44 @@
         selectedRequest = null;
     }
 
-    private void SaveInternalNote()
+    private async Task SaveInternalNote()
     {
-        message = "Internal note saved locally. Database saving will be added next.";
+        if (selectedRequest is null) return;
+
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var req = new HttpRequestMessage(
+            HttpMethod.Put,
+            $"https://localhost:7066/api/StoreRequests/{selectedRequest.Id}/crm");
+
+        req.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        req.Content = JsonContent.Create(new
+        {
+            priority = selectedRequest.Priority,
+            assignedTo = selectedRequest.AssignedTo,
+            internalNote = selectedRequest.InternalNote
+        });
+
+        var response = await Http.SendAsync(req);
+
+        if (response.IsSuccessStatusCode)
+        {
+            noteSaved = true;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+
+            noteSaved = false;
+            StateHasChanged();
+        }
     }
 
     private async Task UpdateStatus(StoreRequestViewModel request)
     {
+        drawerMessage = "Updating status...";
+
         var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
 
         using var httpRequest = new HttpRequestMessage(
@@ -569,14 +734,68 @@
         if (response.IsSuccessStatusCode)
         {
             request.Status = request.SelectedStatus;
-            message = $"Status updated for {request.StoreName}. Email sent to client.";
+
+            statusSaved = true;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+
+            statusSaved = false;
+            StateHasChanged();
         }
         else
         {
-            message = $"Could not update status. Status: {(int)response.StatusCode}";
+            drawerMessage = "❌ Failed to update status.";
         }
+
+        StateHasChanged();
     }
 
+
+    private async Task AssignTask()
+    {
+        if (selectedRequest is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(selectedRequest.AssignedTo))
+        {
+            message = "Please select admin.";
+            return;
+        }
+
+        var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+
+        using var req = new HttpRequestMessage(
+            HttpMethod.Post,
+            "https://localhost:7066/api/Auth/assign-task");
+
+        req.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        req.Content = JsonContent.Create(new
+        {
+            email = selectedRequest.AssignedTo,
+            project = selectedRequest.StoreName,
+            customer = selectedRequest.CustomerFullName
+        });
+
+        var response = await Http.SendAsync(req);
+
+        if (response.IsSuccessStatusCode)
+        {
+            assignSaved = true;
+            StateHasChanged();
+
+            await Task.Delay(2000);
+
+            assignSaved = false;
+            StateHasChanged();
+        }
+        else
+        {
+            message = "Could not assign task.";
+        }
+    }
     async Task DownloadInvoice(int requestId)
     {
         var token = await JS.InvokeAsync<string>(

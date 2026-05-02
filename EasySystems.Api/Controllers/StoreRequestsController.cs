@@ -112,6 +112,9 @@ public class StoreRequestsController : ControllerBase
                 storeRequest.StoreName,
                 storeRequest.BusinessType,
                 storeRequest.PackageName,
+                storeRequest.Priority,
+                storeRequest.AssignedTo,
+                storeRequest.InternalNote,
                 storeRequest.Notes,
                 storeRequest.Status,
                 storeRequest.CreatedAtUtc,
@@ -203,5 +206,31 @@ public class StoreRequestsController : ControllerBase
             .ToListAsync();
 
         return Ok(requests);
+    }
+
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [HttpPut("{id:int}/crm")]
+    public async Task<IActionResult> UpdateCrm(int id, UpdateCrmDto dto)
+    {
+        var request = await _dbContext.StoreRequests
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (request is null)
+            return NotFound();
+
+        request.Priority = dto.Priority;
+        request.AssignedTo = dto.AssignedTo;
+        request.InternalNote = dto.InternalNote;
+
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(new { message = "CRM updated" });
+    }
+
+    public class UpdateCrmDto
+    {
+        public string Priority { get; set; } = "";
+        public string AssignedTo { get; set; } = "";
+        public string InternalNote { get; set; } = "";
     }
 }

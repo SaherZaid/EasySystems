@@ -3131,3 +3131,19 @@ h1:focus {
     display: flex;
     gap: 8px;
 }
+
+.save-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.mini-success {
+    font-size: 13px;
+    font-weight: 700;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 6px 10px;
+    border-radius: 999px;
+}

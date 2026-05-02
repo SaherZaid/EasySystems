@@ -190,6 +190,31 @@ public class AuthController : ControllerBase
 
     }
 
+    [HttpPost("assign-task")]
+[Authorize(Roles = "Admin,SuperAdmin")]
+public async Task<IActionResult> AssignTask(AssignTaskRequest request)
+{
+    await _emailService.SendCustomEmail(
+        request.Email,
+        "🔥 New EasySystems Task Assigned",
+        $@"
+<h2>New Project Assigned To You</h2>
+
+<p><strong>Project:</strong> {request.Project}</p>
+<p><strong>Customer:</strong> {request.Customer}</p>
+
+<p>Please login to EasySystems CRM and handle this request.</p>");
+
+    return Ok();
+}
+
+public class AssignTaskRequest
+{
+    public string Email { get; set; } = "";
+    public string Project { get; set; } = "";
+    public string Customer { get; set; } = "";
+}
+
 
     [Authorize(Roles = "SuperAdmin")]
     [HttpPost("update-role")]

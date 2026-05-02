@@ -6,15 +6,18 @@ public class StoreRequest
 
     public int UserAccountId { get; set; }
 
-    public string StoreName { get; set; } = string.Empty;
-
-    public string BusinessType { get; set; } = string.Empty;
-
-    public string PackageName { get; set; } = string.Empty;
-
-    public string Notes { get; set; } = string.Empty;
-
-    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public string StoreName { get; set; } = "";
+    public string BusinessType { get; set; } = "";
+    public string PackageName { get; set; } = "";
+    public string Notes { get; set; } = "";
 
     public string Status { get; set; } = "Pending";
+
+    public string Priority { get; set; } = "Medium";
+
+    public string AssignedTo { get; set; } = "";
+
+    public string InternalNote { get; set; } = "";
+
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }
