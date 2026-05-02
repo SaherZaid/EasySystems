@@ -8,17 +8,21 @@
         <span>EasySystems</span>
     </NavLink>
 
-    <nav class="main-nav">
-        <NavLink href="/" Match="NavLinkMatch.All">Home</NavLink>
-        <NavLink href="/create-store">Create Store</NavLink>
-        <NavLink href="/pricing">Pricing</NavLink>
-        <NavLink href="/about">About</NavLink>
-        <NavLink href="/faq">FAQ</NavLink>
-        <NavLink href="/contact">Contact</NavLink>
-        
+    <button class="mobile-menu-btn"
+            @onclick="ToggleMenu">
+        ☰
+    </button>
+
+    <nav class="main-nav @(menuOpen ? "show-mobile-nav" : "")">
+        <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">Home</NavLink>
+        <NavLink href="/create-store" @onclick="CloseMenu">Create Store</NavLink>
+        <NavLink href="/pricing" @onclick="CloseMenu">Pricing</NavLink>
+        <NavLink href="/about" @onclick="CloseMenu">About</NavLink>
+        <NavLink href="/faq" @onclick="CloseMenu">FAQ</NavLink>
+        <NavLink href="/contact" @onclick="CloseMenu">Contact</NavLink>
     </nav>
 
-    <div class="header-actions">
+    <div class="header-actions desktop-actions">
         <HeaderAuth />
 
         <NavLink href="/create-store" class="header-cta">
@@ -28,8 +32,49 @@
 
 </header>
 
+@if (menuOpen)
+{
+    <div class="mobile-menu-panel">
+
+        <div class="mobile-links">
+            <NavLink href="/" Match="NavLinkMatch.All" @onclick="CloseMenu">Home</NavLink>
+            <NavLink href="/create-store" @onclick="CloseMenu">Create Store</NavLink>
+            <NavLink href="/pricing" @onclick="CloseMenu">Pricing</NavLink>
+            <NavLink href="/about" @onclick="CloseMenu">About</NavLink>
+            <NavLink href="/faq" @onclick="CloseMenu">FAQ</NavLink>
+            <NavLink href="/contact" @onclick="CloseMenu">Contact</NavLink>
+        </div>
+
+        <div class="mobile-auth">
+            <HeaderAuth />
+        </div>
+
+        <NavLink href="/create-store"
+                 class="mobile-cta"
+                 @onclick="CloseMenu">
+            Start Now
+        </NavLink>
+
+    </div>
+}
+
 <main>
     @Body
 </main>
 
 <SiteFooter />
+
+@code {
+
+    private bool menuOpen = false;
+
+    private void ToggleMenu()
+    {
+        menuOpen = !menuOpen;
+    }
+
+    private void CloseMenu()
+    {
+        menuOpen = false;
+    }
+}

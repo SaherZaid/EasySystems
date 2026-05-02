@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject HttpClient Http
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 <PageTitle>Create Store</PageTitle>
 
@@ -17,25 +18,22 @@
 
     <section class="pro-form-card">
 
+        <div class="selected-package-box">
+            <strong>Selected Package:</strong> @packageName
+            <span>@budget kr</span>
+        </div>
+
         <h2>Business Information</h2>
 
         <div class="pro-grid">
+
             <input @bind="storeName"
                    class="@GetErrorClass(storeName)"
                    placeholder="Store name *" />
 
-            @if (IsEmpty(storeName))
-            {
-                <small class="field-error">Store name is required</small>
-            }
             <input @bind="businessType"
                    class="@GetErrorClass(businessType)"
                    placeholder="What do you sell? *" />
-
-            @if (IsEmpty(businessType))
-            {
-                <small class="field-error">Business type is required</small>
-            }
 
             <select @bind="productCount">
                 <option>1-20 products</option>
@@ -50,11 +48,13 @@
                 <option>Arabic + Swedish</option>
                 <option>Arabic + Swedish + English</option>
             </select>
+
         </div>
 
         <h2>Design & Branding</h2>
 
         <div class="pro-grid">
+
             <select @bind="hasLogo">
                 <option>I have logo</option>
                 <option>I need logo</option>
@@ -64,18 +64,9 @@
                    class="@GetErrorClass(brandColors)"
                    placeholder="Preferred colors *" />
 
-            @if (IsEmpty(brandColors))
-            {
-                <small class="field-error">Please enter colors</small>
-            }
             <input @bind="exampleSites"
                    class="@GetErrorClass(exampleSites)"
                    placeholder="Sites you like *" />
-
-            @if (IsEmpty(exampleSites))
-            {
-                <small class="field-error">Please add examples</small>
-            }
 
             <select @bind="designStyle">
                 <option>Luxury</option>
@@ -83,14 +74,16 @@
                 <option>Simple</option>
                 <option>Bold</option>
             </select>
+
         </div>
 
         <h2>Store Features</h2>
 
         <div class="pro-grid">
+
             <select @bind="payment">
                 <option>Yes online payment</option>
-                <option>No</option>
+                <option>No online payment</option>
             </select>
 
             <select @bind="shipping">
@@ -107,29 +100,23 @@
                 <option>Need discount codes</option>
                 <option>No discounts</option>
             </select>
+
         </div>
 
         <h2>Business Plan</h2>
 
         <div class="pro-grid">
-            <input @bind="budget"
-                   class="@GetErrorClass(budget)"
-                   placeholder="Budget (SEK) *" />
 
-            @if (IsEmpty(budget))
-            {
-                <small class="field-error">Budget is required</small>
-            }
+            <input @bind="budget"
+                   readonly
+                   class="readonly-budget"
+                   placeholder="Budget" />
+
             <input @bind="launchDate"
                    class="@GetErrorClass(launchDate)"
                    placeholder="Preferred launch date *" />
 
-            @if (IsEmpty(launchDate))
-            {
-                <small class="field-error">Launch date required</small>
-            }
-
-            <select @bind="packageName">
+            <select value="@packageName" @onchange="PackageChanged">
                 <option>Starter</option>
                 <option>Business</option>
                 <option>Premium</option>
@@ -139,10 +126,6 @@
                    class="@GetErrorClass(domain)"
                    placeholder="Do you have domain? *" />
 
-            @if (IsEmpty(domain))
-            {
-                <small class="field-error">Please answer this field</small>
-            }
         </div>
 
         <h2>Extra Notes</h2>
@@ -150,11 +133,6 @@
         <textarea @bind="notes"
                   class="@GetErrorClass(notes)"
                   placeholder="Write anything important here... *"></textarea>
-
-        @if (IsEmpty(notes))
-        {
-            <small class="field-error">Please write notes</small>
-        }
 
         <button class="submit-btn-pro"
                 @onclick="SubmitRequest"
@@ -187,7 +165,8 @@
     string shipping = "Need shipping";
     string accounts = "Need customer accounts";
     string discounts = "Need discount codes";
-    string budget = "";
+
+    string budget = "9,900";
     string launchDate = "";
     string packageName = "Business";
     string domain = "";
@@ -195,8 +174,57 @@
 
     string message = "";
     bool isLoading = false;
-
     bool triedSubmit = false;
+
+    protected override void OnInitialized()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("package", out var package))
+        {
+            packageName = package!;
+        }
+
+        ApplyPackageRules();
+    }
+
+    void PackageChanged(ChangeEventArgs e)
+    {
+        packageName = e.Value?.ToString() ?? "Business";
+        ApplyPackageRules();
+    }
+
+    void ApplyPackageRules()
+    {
+        switch (packageName)
+        {
+            case "Starter":
+                budget = "4,900";
+                productCount = "1-20 products";
+                payment = "No online payment";
+                accounts = "No accounts needed";
+                discounts = "No discounts";
+                break;
+
+            case "Business":
+                budget = "9,900";
+                productCount = "20-100 products";
+                payment = "Yes online payment";
+                accounts = "Need customer accounts";
+                discounts = "Need discount codes";
+                break;
+
+            case "Premium":
+                budget = "19,900";
+                productCount = "100+ products";
+                payment = "Yes online payment";
+                accounts = "Need customer accounts";
+                discounts = "Need discount codes";
+                designStyle = "Luxury";
+                break;
+        }
+    }
 
     bool IsEmpty(string value)
     {
@@ -206,16 +234,12 @@
 
     string GetErrorClass(string value)
     {
-        return IsEmpty(value)
-            ? "input-error"
-            : "";
+        return IsEmpty(value) ? "input-error" : "";
     }
 
     async Task SubmitRequest()
     {
-
         triedSubmit = true;
-
         message = "";
 
         if (!ValidateForm())
@@ -245,20 +269,20 @@
             notes,
             answers = new[]
             {
-            new { question = "Product Count", answer = productCount },
-            new { question = "Languages", answer = languages },
-            new { question = "Logo", answer = hasLogo },
-            new { question = "Colors", answer = brandColors },
-            new { question = "Example Sites", answer = exampleSites },
-            new { question = "Design Style", answer = designStyle },
-            new { question = "Payment", answer = payment },
-            new { question = "Shipping", answer = shipping },
-            new { question = "Accounts", answer = accounts },
-            new { question = "Discounts", answer = discounts },
-            new { question = "Budget", answer = budget },
-            new { question = "Launch Date", answer = launchDate },
-            new { question = "Domain", answer = domain }
-        }
+                new { question = "Product Count", answer = productCount },
+                new { question = "Languages", answer = languages },
+                new { question = "Logo", answer = hasLogo },
+                new { question = "Colors", answer = brandColors },
+                new { question = "Example Sites", answer = exampleSites },
+                new { question = "Design Style", answer = designStyle },
+                new { question = "Payment", answer = payment },
+                new { question = "Shipping", answer = shipping },
+                new { question = "Accounts", answer = accounts },
+                new { question = "Discounts", answer = discounts },
+                new { question = "Budget", answer = budget },
+                new { question = "Launch Date", answer = launchDate },
+                new { question = "Domain", answer = domain }
+            }
         });
 
         var response = await Http.SendAsync(req);
@@ -268,7 +292,6 @@
         if (response.IsSuccessStatusCode)
         {
             message = "Your request has been sent successfully ✔";
-
             ResetForm();
         }
         else
@@ -284,7 +307,6 @@
             !string.IsNullOrWhiteSpace(businessType) &&
             !string.IsNullOrWhiteSpace(brandColors) &&
             !string.IsNullOrWhiteSpace(exampleSites) &&
-            !string.IsNullOrWhiteSpace(budget) &&
             !string.IsNullOrWhiteSpace(launchDate) &&
             !string.IsNullOrWhiteSpace(domain) &&
             !string.IsNullOrWhiteSpace(notes);
@@ -292,24 +314,16 @@
 
     void ResetForm()
     {
-        triedSubmit = false;
         storeName = "";
         businessType = "";
-        productCount = "1-20 products";
-        languages = "Swedish";
-        hasLogo = "I have logo";
         brandColors = "";
         exampleSites = "";
-        designStyle = "Modern";
-        payment = "Yes online payment";
-        shipping = "Need shipping";
-        accounts = "Need customer accounts";
-        discounts = "Need discount codes";
-        budget = "";
         launchDate = "";
-        packageName = "Business";
         domain = "";
         notes = "";
+
+        packageName = "Business";
+        ApplyPackageRules();
     }
 
 }
