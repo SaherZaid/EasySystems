@@ -6,7 +6,9 @@
 
 @if (!loaded)
 {
-    <span class="login-link">...</span>
+    <NavLink href="/login" class="login-link">
+        Login
+    </NavLink>
 }
 else if (!Auth.IsLoggedIn)
 {
@@ -131,6 +133,7 @@ else
         _ = InvokeAsync(async () =>
         {
             await LoadUser();
+            loaded = true;
             StateHasChanged();
         });
     }
